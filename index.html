@@ -42,7 +42,9 @@
 <body>
   <h2>Інвентаризація обладнання</h2>
   <p>Сканування штрихкодів — тест</p>
-
+<button onclick="testConnection()">
+  Перевірити зв’язок
+</button>
   <button onclick="startScanner()">
     Почати сканування
   </button>
@@ -54,6 +56,31 @@
   <script>
     let reader = null;
     let lastCode = '';
+
+async function testConnection() {
+  const url = prompt(
+    'Встав URL Google Apps Script, що закінчується на /exec'
+  );
+
+  if (!url) return;
+
+  const resultBox = document.getElementById('result');
+  resultBox.textContent = 'Перевіряємо зв’язок...';
+
+  try {
+    const response = await fetch(
+      url + '?action=scan&barcode=11137000039'
+    );
+
+    const data = await response.json();
+
+    resultBox.textContent =
+      'Відповідь сервера: ' + JSON.stringify(data);
+  } catch (error) {
+    resultBox.textContent =
+      'Помилка з’єднання: ' + error.message;
+  }
+}
 
     async function startScanner() {
       const resultBox = document.getElementById('result');
