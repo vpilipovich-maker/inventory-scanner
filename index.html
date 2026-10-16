@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <title>Інвентаризація обладнання</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    button {
+      padding: 16px 24px;
+      font-size: 18px;
+      background: #1769aa;
+      color: white;
+      border: 0;
+      border-radius: 10px;
+    }
+    video {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+      border-radius: 10px;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+  <h2>Інвентаризація обладнання</h2>
+  <p>Тест задньої камери</p>
+
+  <button onclick="startCamera()">
+    Увімкнути камеру
+  </button>
+
+  <video id="camera" autoplay playsinline muted></video>
+  <p id="status">Камера ще не запущена</p>
+
+  <script>
+    async function startCamera() {
+      const status = document.getElementById('status');
+
+      try {
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+            audio: false
+          });
+
+        document.getElementById('camera').srcObject = stream;
+        status.textContent = 'Камера працює!';
+      } catch (error) {
+        status.textContent =
+          'Помилка: ' + error.name + ' — ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
