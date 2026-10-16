@@ -45,6 +45,24 @@
 <button onclick="testConnection()">
   Перевірити зв’язок
 </button>
+  
+<button onclick="testRedirect()">
+  ТЕСТ ПЕРЕДАВАННЯ
+</button>
+
+<script>
+function testRedirect() {
+  const url = prompt(
+    'Встав адресу Google Apps Script до /exec'
+  );
+
+  if (!url) return;
+
+  window.location.href =
+    url + '?action=scan&barcode=11137000039';
+}
+</script>
+
   <button onclick="startScanner()">
     Почати сканування
   </button>
