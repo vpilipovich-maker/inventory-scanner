@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1">
+
   <title>Сканер інвентаризації</title>
 
   <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
@@ -15,6 +16,7 @@
       text-align: center;
       padding: 15px;
     }
+
     button {
       padding: 15px 20px;
       font-size: 18px;
@@ -22,7 +24,9 @@
       color: white;
       border: 0;
       border-radius: 10px;
+      cursor: pointer;
     }
+
     video {
       width: 100%;
       max-width: 500px;
@@ -30,6 +34,7 @@
       background: black;
       border-radius: 10px;
     }
+
     #result {
       margin-top: 20px;
       font-size: 24px;
@@ -40,30 +45,11 @@
 </head>
 
 <body>
+
   <h2>Інвентаризація обладнання</h2>
-  <p>Сканування штрихкодів — тест</p>
-<button onclick="testConnection()">
-  Перевірити зв’язок
-</button>
-  
-<button onclick="testRedirect()">
-  ТЕСТ ПЕРЕДАВАННЯ
-</button>
+  <p>Автоматичне сканування штрихкодів — тест</p>
 
-<script>
-function testRedirect() {
-  const url = prompt(
-    'Встав адресу Google Apps Script до /exec'
-  );
-
-  if (!url) return;
-
-  window.location.href =
-    url + '?action=scan&barcode=11137000039';
-}
-</script>
-
-  <button onclick="startScanner()">
+  <button id="startButton" onclick="startScanner()">
     Почати сканування
   </button>
 
@@ -72,69 +58,76 @@ function testRedirect() {
   <div id="result">Очікування сканування...</div>
 
   <script>
+    const SCRIPT_URL =
+      'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
+
+    const TEST_BARCODE = '11137000039';
+
     let reader = null;
-    let lastCode = '';
-
-async function testConnection() {
-  const url = prompt(
-    'Встав URL Google Apps Script, що закінчується на /exec'
-  );
-
-  if (!url) return;
-
-  const resultBox = document.getElementById('result');
-  resultBox.textContent = 'Перевіряємо зв’язок...';
-
-  try {
-    const response = await fetch(
-      url + '?action=scan&barcode=11137000039'
-    );
-
-    const data = await response.json();
-
-    resultBox.textContent =
-      'Відповідь сервера: ' + JSON.stringify(data);
-  } catch (error) {
-    resultBox.textContent =
-      'Помилка з’єднання: ' + error.message;
-  }
-}
+    let sending = false;
 
     async function startScanner() {
       const resultBox = document.getElementById('result');
 
       try {
         if (!window.ZXing) {
-          throw new Error('Бібліотека ZXing не завантажилася');
+          throw new Error(
+            'Бібліотека ZXing не завантажилася'
+          );
         }
 
-        if (reader) reader.reset();
+        if (reader) {
+          reader.reset();
+        }
 
         reader = new ZXing.BrowserMultiFormatReader();
+        sending = false;
 
-        resultBox.textContent = 'Наведіть камеру на штрихкод';
+        resultBox.textContent =
+          'Наведіть камеру на штрихкод';
 
         await reader.decodeFromVideoDevice(
           undefined,
           'camera',
           (result, error) => {
-            if (result) {
-              const code = result.getText().trim();
+            if (!result || sending) return;
 
-              if (code !== lastCode) {
-                lastCode = code;
-                resultBox.textContent = 'Зчитано: ' + code;
-                if (navigator.vibrate) navigator.vibrate(150);
-              }
+            const code = result.getText().trim();
+
+            if (code !== TEST_BARCODE) {
+              resultBox.textContent =
+                'Тест: очікується номер ' + TEST_BARCODE;
+              return;
             }
+
+            sending = true;
+
+            resultBox.textContent =
+              'Зчитано: ' + code +
+              '. Передавання в таблицю...';
+
+            if (navigator.vibrate) {
+              navigator.vibrate(150);
+            }
+
+            reader.reset();
+
+            const target =
+              SCRIPT_URL +
+              '?action=scan&barcode=' +
+              encodeURIComponent(code);
+
+            window.location.assign(target);
           }
         );
+
       } catch (error) {
         resultBox.textContent =
-          'Помилка: ' + error.name + ' — ' + error.message;
+          'Помилка: ' +
+          error.name + ' — ' + error.message;
       }
     }
   </script>
+
 </body>
 </html>
-
