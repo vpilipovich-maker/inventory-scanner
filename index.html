@@ -3,104 +3,104 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Інвентаризація V9.2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Інвентаризація — V10</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <style>
-* { box-sizing:border-box; }
+* { box-sizing: border-box; }
 
 body {
-  margin:0;
-  padding:14px;
-  font-family:Arial,sans-serif;
-  background:#f5f6f8;
-  text-align:center;
-  color:#222;
+  margin: 0;
+  padding: 14px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f5f6f8;
+  color: #222;
 }
 
-h2 { margin:12px 0 6px; }
-p { color:#555; }
+h2 { margin: 10px 0 5px; }
+p { color: #555; }
 
 button {
-  background:#1769aa;
-  color:white;
-  border:0;
-  border-radius:10px;
-  padding:13px 16px;
-  font-size:16px;
-  margin:5px;
+  background: #1769aa;
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  padding: 13px 17px;
+  margin: 5px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
-button:disabled { opacity:.5; }
-
-.secondary { background:#666; }
+button:disabled { opacity: .5; }
+.secondary { background: #666; }
 
 .camera-box {
-  position:relative;
-  max-width:550px;
-  margin:15px auto;
-  background:black;
-  border-radius:12px;
-  overflow:hidden;
+  position: relative;
+  max-width: 550px;
+  margin: 12px auto;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 video {
-  display:block;
-  width:100%;
-  height:auto;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .scan-area {
-  position:absolute;
-  left:20%;
-  top:42%;
-  width:60%;
-  height:16%;
-  border:2px solid #00ff88;
-  border-radius:8px;
-  pointer-events:none;
+  position: absolute;
+  left: 20%;
+  top: 42%;
+  width: 60%;
+  height: 16%;
+  border: 2px solid #00ff88;
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .scan-line {
-  position:absolute;
-  left:23%;
-  top:50%;
-  width:54%;
-  border-top:2px solid #00ff88;
-  pointer-events:none;
+  position: absolute;
+  left: 23%;
+  top: 50%;
+  width: 54%;
+  border-top: 2px solid #00ff88;
+  pointer-events: none;
 }
 
 #result {
-  max-width:550px;
-  margin:12px auto;
-  padding:15px;
-  border-radius:10px;
-  background:#e5e7eb;
-  font-size:17px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 15px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  font-size: 17px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
 }
 
-#cameraInfo,#details {
-  font-size:13px;
-  color:#555;
-  margin:10px auto;
-  max-width:550px;
+#cameraInfo, #details {
+  max-width: 550px;
+  margin: 8px auto;
+  font-size: 13px;
+  color: #555;
 }
 
 .manual {
-  max-width:550px;
-  margin:15px auto;
+  max-width: 550px;
+  margin: 15px auto;
 }
 
 .manual input {
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  border: 1px solid #aaa;
+  border-radius: 9px;
 }
 </style>
 </head>
@@ -108,7 +108,7 @@ video {
 <body>
 
 <h2>Інвентаризація обладнання</h2>
-<p>Code 128 — сканер V9.2</p>
+<p>Code 128 — швидкий сканер V10</p>
 
 <button id="startButton" onclick="startScanner()">
   Почати сканування
@@ -132,9 +132,7 @@ video {
   <input id="manualCode"
          type="text"
          placeholder="Інвентарний номер вручну">
-  <button onclick="sendManual()">
-    Перевірити номер
-  </button>
+  <button onclick="sendManual()">Перевірити номер</button>
 </div>
 
 <script>
@@ -151,32 +149,35 @@ const startButton = document.getElementById('startButton');
 
 let stream = null;
 let reader = null;
-let scanTimer = null;
+let detector = null;
 let scanning = false;
-let decoding = false;
 let sending = false;
 let startToken = 0;
+let scanTimer = null;
 let frameNumber = 0;
-
-let candidate = '';
-let candidateCount = 0;
-let candidateTime = 0;
+let lastNativeSuccess = 0;
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d', {
-  willReadFrequently:true
+  willReadFrequently: true
 });
 
-function showResult(text, color='#e5e7eb') {
-  resultBox.textContent = text;
+function showResult(message, color = '#e5e7eb') {
+  resultBox.textContent = message;
   resultBox.style.background = color;
 }
 
+function validCode(code) {
+  return typeof code === 'string' &&
+    code.trim().length > 0 &&
+    code.trim().length <= 150;
+}
+
 function showPreviousResult() {
-  const params = new URLSearchParams(location.search);
-  const status = params.get('status');
-  const code = params.get('barcode');
-  const row = params.get('row');
+  const p = new URLSearchParams(location.search);
+  const status = p.get('status');
+  const code = p.get('barcode');
+  const row = p.get('row');
 
   if (!status) return;
 
@@ -191,59 +192,55 @@ function showPreviousResult() {
       '#fff3cd'
     );
   } else if (status === 'cancelled') {
-    showResult(
-      'Додавання скасовано: ' + code
-    );
+    showResult('Додавання скасовано');
   }
 
   if (row) {
     details.textContent = 'Рядок таблиці: ' + row;
   }
 
-  // Прибираємо параметри результату,
-  // щоб він не повторювався при оновленні.
   history.replaceState(
     {},
     '',
-    location.pathname + '?v=92'
+    location.pathname + '?v=10'
   );
 }
 
 async function openCamera() {
   const modes = [
     {
-      facingMode:{ideal:'environment'},
-      width:{ideal:2560},
-      height:{ideal:1440}
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
     },
     {
-      facingMode:{ideal:'environment'},
-      width:{ideal:1920},
-      height:{ideal:1080}
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
     },
     {
-      facingMode:{ideal:'environment'}
+      facingMode: { ideal: 'environment' }
     },
     true
   ];
 
   let lastError;
 
-  for (let i=0; i<modes.length; i++) {
+  for (let i = 0; i < modes.length; i++) {
     try {
       details.textContent =
-        'Запуск камери: режим ' + (i+1);
+        'Запуск камери: режим ' + (i + 1);
 
       return await navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:modes[i]
+        audio: false,
+        video: modes[i]
       });
-    } catch (e) {
-      lastError=e;
+    } catch (error) {
+      lastError = error;
 
-      if (e.name==='NotAllowedError' ||
-          e.name==='SecurityError') {
-        throw e;
+      if (error.name === 'NotAllowedError' ||
+          error.name === 'SecurityError') {
+        throw error;
       }
     }
   }
@@ -252,321 +249,385 @@ async function openCamera() {
     new Error('Камера недоступна');
 }
 
-async function startScanner() {
-  if (scanning || sending) return;
-
-  if (!window.ZXing) {
-    showResult('ZXing не завантажено','#f4cccc');
-    return;
-  }
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-    showResult('Камера недоступна','#f4cccc');
-    return;
-  }
-
-  const token=++startToken;
-  scanning=true;
-  startButton.disabled=true;
-
-  try {
-    showResult('Запускаємо камеру...');
-
-    const opened=await openCamera();
-
-    if (!scanning || token!==startToken) {
-      opened.getTracks().forEach(t=>t.stop());
-      return;
-    }
-
-    stream=opened;
-    video.srcObject=stream;
-    await video.play();
-
-    if (!scanning || token!==startToken) return;
-
-    const track=stream.getVideoTracks()[0];
-    await configureCamera(track);
-
-    const hints=new Map();
-    hints.set(
-      ZXing.DecodeHintType.POSSIBLE_FORMATS,
-      [ZXing.BarcodeFormat.CODE_128]
-    );
-    hints.set(
-      ZXing.DecodeHintType.TRY_HARDER,
-      true
-    );
-
-    reader=new ZXing.MultiFormatReader();
-    reader.setHints(hints);
-
-    candidate='';
-    candidateCount=0;
-    frameNumber=0;
-
-    showResult('Наведіть штрихкод у зелену рамку');
-
-    scanTimer=setInterval(scanFrame,180);
-  } catch(e) {
-    if (token!==startToken) return;
-
-    stopScanner(false);
-
-    showResult(
-      'Помилка камери: '+e.message,
-      '#f4cccc'
-    );
-    details.textContent='Тип: '+e.name;
-  }
-}
-
 async function configureCamera(track) {
   try {
-    const caps=track.getCapabilities
+    const caps = track.getCapabilities
       ? track.getCapabilities()
       : {};
 
     if (caps.focusMode?.includes('continuous')) {
       try {
         await track.applyConstraints({
-          advanced:[{focusMode:'continuous'}]
+          advanced: [{ focusMode: 'continuous' }]
         });
-      } catch(e) {}
+      } catch (e) {}
     }
 
     if (caps.zoom &&
         Number.isFinite(caps.zoom.min) &&
         Number.isFinite(caps.zoom.max)) {
-      const zoom=Math.max(
+      const zoom = Math.max(
         caps.zoom.min,
-        Math.min(1,caps.zoom.max)
+        Math.min(1, caps.zoom.max)
       );
 
       try {
         await track.applyConstraints({
-          advanced:[{zoom}]
+          advanced: [{ zoom }]
         });
-      } catch(e) {}
+      } catch (e) {}
     }
 
-    const s=track.getSettings();
+    const s = track.getSettings();
 
-    cameraInfo.textContent=
-      'Відео: '+(s.width||video.videoWidth)+
-      '×'+(s.height||video.videoHeight)+
-      ' | Zoom: '+(s.zoom??'авто')+
-      ' | Фокус: '+(s.focusMode||'авто');
-  } catch(e) {
-    cameraInfo.textContent=
-      'Камера: стандартні налаштування';
+    cameraInfo.textContent =
+      'Відео: ' + (s.width || video.videoWidth) +
+      '×' + (s.height || video.videoHeight) +
+      ' | Zoom: ' + (s.zoom ?? 'авто') +
+      ' | Фокус: ' + (s.focusMode || 'авто');
+
+  } catch (e) {
+    cameraInfo.textContent =
+      'Стандартні налаштування камери';
   }
 }
 
-function decodeImage() {
+async function setupDecoders() {
+  detector = null;
+  reader = null;
+
+  if ('BarcodeDetector' in window) {
+    try {
+      const formats =
+        await BarcodeDetector.getSupportedFormats();
+
+      if (formats.includes('code_128')) {
+        detector = new BarcodeDetector({
+          formats: ['code_128']
+        });
+      }
+    } catch (e) {
+      detector = null;
+    }
+  }
+
+  if (window.ZXing) {
+    const hints = new Map();
+
+    hints.set(
+      ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      [ZXing.BarcodeFormat.CODE_128]
+    );
+
+    hints.set(
+      ZXing.DecodeHintType.TRY_HARDER,
+      true
+    );
+
+    reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+  }
+
+  if (!detector && !reader) {
+    throw new Error(
+      'Не вдалося завантажити механізм розпізнавання'
+    );
+  }
+
+  details.textContent =
+    detector
+      ? 'Режим: швидкий BarcodeDetector + ZXing'
+      : 'Режим: ZXing';
+}
+
+async function startScanner() {
+  if (scanning || sending) return;
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showResult('Камера недоступна', '#f4cccc');
+    return;
+  }
+
+  const token = ++startToken;
+
+  scanning = true;
+  startButton.disabled = true;
+
   try {
-    const source=
+    showResult('Запускаємо камеру...');
+
+    const opened = await openCamera();
+
+    if (!scanning || token !== startToken) {
+      opened.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    stream = opened;
+    video.srcObject = stream;
+    await video.play();
+
+    if (!scanning || token !== startToken) return;
+
+    await configureCamera(stream.getVideoTracks()[0]);
+    await setupDecoders();
+
+    if (!scanning || token !== startToken) return;
+
+    frameNumber = 0;
+    lastNativeSuccess = 0;
+
+    showResult('Наведіть штрихкод у зелену рамку');
+
+    scheduleNextFrame(token, 0);
+
+  } catch (error) {
+    if (token !== startToken) return;
+
+    stopScanner(false);
+
+    showResult(
+      'Помилка: ' + error.message,
+      '#f4cccc'
+    );
+  }
+}
+
+function scheduleNextFrame(token, delay = 70) {
+  if (!scanning || token !== startToken) return;
+
+  scanTimer = setTimeout(() => {
+    scanFrame(token);
+  }, delay);
+}
+
+function drawScanRegion() {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+
+  if (!w || !h) return false;
+
+  // Відео може бути портретним.
+  // Беремо центральну область без обрізання
+  // горизонтальних країв штрихкоду.
+  const sx = Math.floor(w * 0.05);
+  const sy = Math.floor(h * 0.30);
+  const sw = Math.floor(w * 0.90);
+  const sh = Math.floor(h * 0.40);
+
+  // Обмежуємо кількість пікселів,
+  // але зберігаємо пропорції.
+  const scale = Math.min(1, 1280 / sw);
+
+  canvas.width = Math.max(1, Math.round(sw * scale));
+  canvas.height = Math.max(1, Math.round(sh * scale));
+
+  ctx.drawImage(
+    video,
+    sx, sy, sw, sh,
+    0, 0, canvas.width, canvas.height
+  );
+
+  return true;
+}
+
+function decodeZXing() {
+  if (!reader) return '';
+
+  try {
+    const source =
       new ZXing.HTMLCanvasElementLuminanceSource(
         canvas
       );
 
-    const bitmap=new ZXing.BinaryBitmap(
+    const bitmap = new ZXing.BinaryBitmap(
       new ZXing.HybridBinarizer(source)
     );
 
-    const result=reader.decode(bitmap);
-    return result ? result.getText().trim() : '';
-  } catch(e) {
+    const result = reader.decode(bitmap);
+
+    return result
+      ? String(result.getText()).trim()
+      : '';
+
+  } catch (e) {
     return '';
   } finally {
     reader.reset();
   }
 }
 
-function enhanceContrast(strength) {
-  const image=ctx.getImageData(
-    0,0,canvas.width,canvas.height
+function enhanceContrast() {
+  const image = ctx.getImageData(
+    0, 0, canvas.width, canvas.height
   );
 
-  const data=image.data;
-  let min=255,max=0;
+  const data = image.data;
+  let min = 255;
+  let max = 0;
 
-  for(let i=0;i<data.length;i+=4) {
-    const g=.299*data[i]+
-      .587*data[i+1]+
-      .114*data[i+2];
+  for (let i = 0; i < data.length; i += 4) {
+    const gray =
+      0.299 * data[i] +
+      0.587 * data[i + 1] +
+      0.114 * data[i + 2];
 
-    if(g<min) min=g;
-    if(g>max) max=g;
+    if (gray < min) min = gray;
+    if (gray > max) max = gray;
   }
 
-  const range=Math.max(1,max-min);
+  const range = Math.max(1, max - min);
 
-  for(let i=0;i<data.length;i+=4) {
-    const g=.299*data[i]+
-      .587*data[i+1]+
-      .114*data[i+2];
+  for (let i = 0; i < data.length; i += 4) {
+    const gray =
+      0.299 * data[i] +
+      0.587 * data[i + 1] +
+      0.114 * data[i + 2];
 
-    let v=((g-min)/range)*255;
-    v=(v-127.5)*strength+127.5;
-    v=Math.max(0,Math.min(255,v));
+    let value = ((gray - min) / range) * 255;
+    value = (value - 127.5) * 1.5 + 127.5;
+    value = Math.max(0, Math.min(255, value));
 
-    data[i]=data[i+1]=data[i+2]=v;
+    data[i] = data[i + 1] = data[i + 2] = value;
   }
 
-  ctx.putImageData(image,0,0);
+  ctx.putImageData(image, 0, 0);
 }
 
-function scanFrame() {
-  if(!scanning || sending || decoding ||
-     !reader || video.readyState<2) return;
-
-  decoding=true;
-
-  try {
-    const w=video.videoWidth;
-    const h=video.videoHeight;
-
-    if(!w || !h) return;
-
-    frameNumber++;
-
-    // Компактна рамка — лише орієнтир.
-    // Для розпізнавання використовуємо
-    // більшу область, щоб не обрізати код.
-    const mode=frameNumber%3;
-
-    let sx=0,sy=0,sw=w,sh=h;
-
-    if(mode===0) {
-      sx=Math.floor(w*.05);
-      sy=Math.floor(h*.35);
-      sw=Math.floor(w*.90);
-      sh=Math.floor(h*.30);
-    } else if(mode===1) {
-      sy=Math.floor(h*.20);
-      sh=Math.floor(h*.60);
-    }
-
-    canvas.width=sw;
-    canvas.height=sh;
-
-    ctx.drawImage(
-      video,
-      sx,sy,sw,sh,
-      0,0,sw,sh
-    );
-
-    let code=decodeImage();
-
-    if(!code && frameNumber%3===0) {
-      enhanceContrast(1.5);
-      code=decodeImage();
-    }
-
-    if(!code && frameNumber%9===0) {
-      enhanceContrast(1.4);
-      code=decodeImage();
-    }
-
-    if(code && code.length<=150) {
-      registerCandidate(code);
-    }
-  } catch(e) {
-    console.warn(e);
-  } finally {
-    decoding=false;
-  }
-}
-
-function registerCandidate(code) {
-  const now=Date.now();
-
-  if(candidate===code &&
-     now-candidateTime<3000) {
-    candidateCount++;
-  } else {
-    candidate=code;
-    candidateCount=1;
-  }
-
-  candidateTime=now;
-
-  if(candidateCount<2) {
-    showResult(
-      'Зчитано: '+code+'. Підтверджуємо...',
-      '#fff3cd'
-    );
+async function scanFrame(token) {
+  if (!scanning ||
+      sending ||
+      token !== startToken ||
+      video.readyState < 2) {
     return;
   }
 
-  sendBarcode(code);
+  try {
+    frameNumber++;
+
+    if (!drawScanRegion()) {
+      return;
+    }
+
+    let code = '';
+
+    // Спочатку нативне швидке розпізнавання.
+    if (detector) {
+      try {
+        const results = await detector.detect(canvas);
+
+        if (!scanning || token !== startToken) return;
+
+        const found = results.find(
+          r => r.format === 'code_128'
+        );
+
+        if (found) {
+          code = String(found.rawValue || '').trim();
+          lastNativeSuccess = Date.now();
+        }
+      } catch (e) {
+        // Якщо нативний механізм дав помилку,
+        // продовжуємо через ZXing.
+      }
+    }
+
+    // ZXing — резервне розпізнавання.
+    if (!code && reader) {
+      code = decodeZXing();
+    }
+
+    // Для вицвілих штрихкодів періодично
+    // посилюємо контрастність.
+    if (!code && reader && frameNumber % 8 === 0) {
+      enhanceContrast();
+      code = decodeZXing();
+    }
+
+    if (validCode(code)) {
+      sendBarcode(code);
+      return;
+    }
+
+  } catch (error) {
+    console.warn('Помилка сканування:', error);
+  } finally {
+    if (scanning && token === startToken) {
+      scheduleNextFrame(token, 50);
+    }
+  }
 }
 
 function sendBarcode(code) {
-  code=String(code||'').trim();
+  code = String(code || '').trim();
 
-  if(!code || code.length>150 || sending) return;
+  if (!validCode(code) || sending) return;
 
-  sending=true;
+  sending = true;
   stopScanner(false);
 
-  if(navigator.vibrate) navigator.vibrate(150);
+  if (navigator.vibrate) {
+    navigator.vibrate(100);
+  }
 
   showResult(
-    'Передаємо номер: '+code,
+    'Зчитано: ' + code + '. Перевіряємо...',
     '#fff3cd'
   );
 
-  const url=SCRIPT_URL+
-    '?action=scan&barcode='+
+  const url = SCRIPT_URL +
+    '?action=scan&barcode=' +
     encodeURIComponent(code);
 
   window.location.assign(url);
 }
 
 function sendManual() {
-  const input=document.getElementById('manualCode');
-  const code=input.value.trim();
+  const code = document
+    .getElementById('manualCode')
+    .value.trim();
 
-  if(!code) {
-    showResult('Введіть інвентарний номер','#f4cccc');
+  if (!validCode(code)) {
+    showResult(
+      'Введіть коректний номер',
+      '#f4cccc'
+    );
     return;
   }
 
   sendBarcode(code);
 }
 
-function stopScanner(showMessage=true) {
-  scanning=false;
+function stopScanner(showMessage = true) {
+  scanning = false;
   startToken++;
 
-  if(scanTimer) {
-    clearInterval(scanTimer);
-    scanTimer=null;
+  if (scanTimer) {
+    clearTimeout(scanTimer);
+    scanTimer = null;
   }
 
-  if(stream) {
-    stream.getTracks().forEach(t=>t.stop());
-    stream=null;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
   }
 
-  video.srcObject=null;
-  reader=null;
-  startButton.disabled=false;
+  video.srcObject = null;
+  reader = null;
+  detector = null;
+  startButton.disabled = false;
 
-  if(showMessage) {
-    sending=false;
+  if (showMessage) {
+    sending = false;
     showResult('Сканування зупинено');
   }
 }
 
-window.addEventListener('pagehide',()=>{
+window.addEventListener('pagehide', () => {
   stopScanner(false);
 });
 
 showPreviousResult();
 </script>
-
 </body>
 </html>
