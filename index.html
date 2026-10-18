@@ -2,217 +2,389 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
 
-  <title>Сканер інвентаризації</title>
+<title>Сканер інвентаризації</title>
 
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 15px;
-      background: #f5f6f8;
-    }
+<style>
+  * { box-sizing: border-box; }
 
-    button {
-      padding: 15px 20px;
-      font-size: 18px;
-      background: #1769aa;
-      color: white;
-      border: 0;
-      border-radius: 10px;
-      margin: 5px;
-    }
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f5f6f8;
+    margin: 0;
+    padding: 16px;
+  }
 
-    video {
-      width: 100%;
-      max-width: 500px;
-      margin-top: 15px;
-      background: black;
-      border-radius: 10px;
-    }
+  h2 { margin-bottom: 8px; }
 
-    #result {
-      margin-top: 20px;
-      padding: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      border-radius: 10px;
-      background: #e5e7eb;
-      overflow-wrap: anywhere;
-    }
-  </style>
+  p { color: #555; }
+
+  button {
+    padding: 14px 18px;
+    font-size: 17px;
+    background: #1769aa;
+    color: white;
+    border: 0;
+    border-radius: 10px;
+    margin: 5px;
+    cursor: pointer;
+  }
+
+  button:disabled { opacity: .5; }
+
+  .camera-box {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    margin: 15px auto;
+    overflow: hidden;
+    border-radius: 12px;
+    background: black;
+  }
+
+  video {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 220px;
+    background: black;
+  }
+
+  .scan-line {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    border-top: 2px solid #00ff88;
+    pointer-events: none;
+  }
+
+  #result {
+    margin: 16px auto;
+    max-width: 520px;
+    padding: 16px;
+    font-size: 19px;
+    font-weight: bold;
+    border-radius: 10px;
+    background: #e5e7eb;
+    overflow-wrap: anywhere;
+  }
+
+  #cameraInfo {
+    font-size: 13px;
+    color: #555;
+    margin: 10px auto;
+    overflow-wrap: anywhere;
+  }
+</style>
 </head>
 
 <body>
 
-  <h2>Інвентаризація обладнання</h2>
-  <p>Швидке сканування Code 128</p>
+<h2>Інвентаризація обладнання</h2>
+<p>Автоматичне сканування Code 128</p>
 
-  <button id="startButton" onclick="startScanner()">
-    Почати сканування
-  </button>
+<button id="startButton" onclick="startScanner()">
+  Почати сканування
+</button>
 
-  <button onclick="stopScanner()">
-    Зупинити камеру
-  </button>
+<button onclick="stopScanner()">
+  Зупинити
+</button>
 
+<div class="camera-box">
   <video id="camera" autoplay playsinline muted></video>
+  <div class="scan-line"></div>
+</div>
 
-  <div id="result">Очікування сканування...</div>
+<div id="result">Очікування сканування...</div>
+<div id="cameraInfo"></div>
 
-  <script>
-    const SCRIPT_URL =
-      'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
+<script>
+const SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
 
-    let reader = null;
-    let sending = false;
-    let scanning = false;
+const video = document.getElementById('camera');
+const resultBox = document.getElementById('result');
+const cameraInfo = document.getElementById('cameraInfo');
+const startButton = document.getElementById('startButton');
 
-    const resultBox = document.getElementById('result');
+let stream = null;
+let reader = null;
+let scanning = false;
+let sending = false;
+let scanTimer = null;
+let scanCanvas = null;
+let scanContext = null;
+let decoding = false;
 
-    function showResult(message, color = '#e5e7eb') {
-      resultBox.textContent = message;
-      resultBox.style.background = color;
+function showResult(message, color = '#e5e7eb') {
+  resultBox.textContent = message;
+  resultBox.style.background = color;
+}
+
+async function startScanner() {
+  if (scanning) return;
+
+  try {
+    if (!window.ZXing) {
+      throw new Error('ZXing не завантажено');
     }
 
-    async function startScanner() {
-      if (scanning) return;
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Камера недоступна');
+    }
+
+    scanning = true;
+    sending = false;
+    startButton.disabled = true;
+
+    showResult('Запускаємо камеру...');
+
+    // 1. Відкриваємо задню камеру один раз
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        frameRate: { ideal: 30 }
+      }
+    });
+
+    if (!scanning) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      return;
+    }
+
+    video.srcObject = stream;
+    await video.play();
+
+    const track = stream.getVideoTracks()[0];
+
+    // 2. Налаштовуємо камеру
+    await configureCamera(track);
+
+    // 3. Налаштовуємо ZXing тільки для Code 128
+    const hints = new Map();
+
+    hints.set(
+      ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      [ZXing.BarcodeFormat.CODE_128]
+    );
+
+    hints.set(
+      ZXing.DecodeHintType.TRY_HARDER,
+      true
+    );
+
+    reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
+
+    scanCanvas = document.createElement('canvas');
+    scanContext = scanCanvas.getContext(
+      '2d', { willReadFrequently: true }
+    );
+
+    if (!scanContext) {
+      throw new Error('Не вдалося створити Canvas');
+    }
+
+    showResult('Наведіть камеру на штрихкод');
+
+    // 4. Аналіз кадрів без перезапуску камери
+    scanTimer = setInterval(scanFrame, 120);
+
+  } catch (error) {
+    stopScanner();
+    showResult(
+      'Помилка: ' + error.message,
+      '#f4cccc'
+    );
+  }
+}
+
+async function configureCamera(track) {
+  let info = [];
+
+  try {
+    const caps = track.getCapabilities
+      ? track.getCapabilities()
+      : {};
+
+    // Автофокус
+    if (caps.focusMode &&
+        caps.focusMode.includes('continuous')) {
+      try {
+        await track.applyConstraints({
+          advanced: [{ focusMode: 'continuous' }]
+        });
+        info.push('Автофокус: активний');
+      } catch (e) {
+        info.push('Фокус: стандартний');
+      }
+    }
+
+    // Автоматичний Zoom
+    if (caps.zoom &&
+        typeof caps.zoom.min === 'number' &&
+        typeof caps.zoom.max === 'number') {
+
+      const min = caps.zoom.min;
+      const max = caps.zoom.max;
+
+      // Максимум 2x, але не нижче доступного мінімуму
+      const targetZoom = Math.min(
+        max,
+        Math.max(min, 2)
+      );
 
       try {
-        if (!window.ZXing) {
-          throw new Error('Бібліотека ZXing не завантажена');
-        }
-
-        if (!navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Браузер не підтримує камеру');
-        }
-
-        scanning = true;
-        sending = false;
-
-        document.getElementById('startButton').disabled = true;
-
-        showResult('Запускаємо задню камеру...');
-
-        // Обмежуємо розпізнавання тільки Code 128
-        const hints = new Map();
-        hints.set(
-          ZXing.DecodeHintType.POSSIBLE_FORMATS,
-          [ZXing.BarcodeFormat.CODE_128]
-        );
-        hints.set(
-          ZXing.DecodeHintType.TRY_HARDER,
-          true
-        );
-
-        reader = new ZXing.BrowserMultiFormatReader(
-          hints,
-          100
-        );
-
-        // Просимо Full HD і задню камеру
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30 }
-          }
+        await track.applyConstraints({
+          advanced: [{ zoom: targetZoom }]
         });
 
-        const videoTrack = stream.getVideoTracks()[0];
+        info.push('Zoom: ' + targetZoom + 'x');
+      } catch (e) {
+        info.push('Zoom: стандартний');
+      }
+    } else {
+      info.push('Zoom: не підтримується');
+    }
 
-        // Автофокус, якщо підтримується
-        try {
-          const capabilities = videoTrack.getCapabilities();
+    const settings = track.getSettings();
 
-          if (capabilities.focusMode &&
-              capabilities.focusMode.includes('continuous')) {
-            await videoTrack.applyConstraints({
-              advanced: [{ focusMode: 'continuous' }]
-            });
-          }
-        } catch (e) {
-          console.log('Автофокус за замовчуванням');
-        }
+    info.push(
+      'Відео: ' +
+      (settings.width || '?') +
+      '×' +
+      (settings.height || '?')
+    );
 
-        // Отримуємо ID вибраної камери
-        const settings = videoTrack.getSettings();
-        const deviceId = settings.deviceId;
+  } catch (e) {
+    info.push('Автоматичні налаштування камери');
+  }
 
-        // Звільняємо попередній потік
-        stream.getTracks().forEach(track => track.stop());
+  cameraInfo.textContent = info.join(' | ');
+}
 
-        if (!scanning) return;
+function scanFrame() {
+  if (!scanning || sending || decoding ||
+      !reader || video.readyState < 2) {
+    return;
+  }
 
-        showResult('Наведіть камеру на штрихкод');
+  decoding = true;
 
-        await reader.decodeFromVideoDevice(
-          deviceId || undefined,
-          'camera',
-          (result, error) => {
-            if (!result || sending || !scanning) return;
+  try {
+    const width = video.videoWidth;
+    const height = video.videoHeight;
 
-            const code = result.getText().trim();
+    if (!width || !height) return;
 
-            if (!code) return;
+    scanCanvas.width = width;
+    scanCanvas.height = height;
 
-            sending = true;
-            scanning = false;
+    scanContext.drawImage(
+      video, 0, 0, width, height
+    );
 
-            showResult(
-              'Зчитано: ' + code + '. Передаємо в таблицю...',
-              '#fff3cd'
-            );
+    const luminanceSource =
+      new ZXing.HTMLCanvasElementLuminanceSource(
+        scanCanvas
+      );
 
-            if (navigator.vibrate) {
-              navigator.vibrate(120);
-            }
+    const binaryBitmap = new ZXing.BinaryBitmap(
+      new ZXing.HybridBinarizer(luminanceSource)
+    );
 
-            reader.reset();
+    const result = reader.decode(binaryBitmap);
 
-            const target =
-              SCRIPT_URL +
-              '?action=scan&barcode=' +
-              encodeURIComponent(code);
+    if (result) {
+      const code = result.getText().trim();
 
-            window.location.assign(target);
-          }
-        );
-
-      } catch (error) {
-        stopScanner();
-        showResult(
-          'Помилка: ' + error.message,
-          '#f4cccc'
-        );
+      if (code) {
+        processBarcode(code);
       }
     }
 
-    function stopScanner() {
-      scanning = false;
-      sending = false;
-
-      if (reader) {
-        reader.reset();
-        reader = null;
-      }
-
-      document.getElementById('startButton').disabled = false;
-      showResult('Камеру зупинено');
+  } catch (error) {
+    // Штрихкод не знайдено у поточному кадрі
+    if (error &&
+        error.name !== 'NotFoundException' &&
+        error.name !== 'ChecksumException' &&
+        error.name !== 'FormatException') {
+      console.warn('Помилка розпізнавання:', error);
     }
+  } finally {
+    if (reader) reader.reset();
+    decoding = false;
+  }
+}
 
-    window.addEventListener('pagehide', function() {
-      if (reader) reader.reset();
-    });
-  </script>
+function processBarcode(code) {
+  if (sending) return;
+
+  sending = true;
+
+  showResult(
+    'Зчитано: ' + code +
+    '. Передавання в таблицю...',
+    '#fff3cd'
+  );
+
+  if (navigator.vibrate) {
+    navigator.vibrate(150);
+  }
+
+  // Зупиняємо камеру перед переходом
+  stopScanner(false);
+
+  const target =
+    SCRIPT_URL +
+    '?action=scan&barcode=' +
+    encodeURIComponent(code);
+
+  window.location.assign(target);
+}
+
+function stopScanner(showMessage = true) {
+  scanning = false;
+
+  if (scanTimer) {
+    clearInterval(scanTimer);
+    scanTimer = null;
+  }
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  video.srcObject = null;
+  reader = null;
+  decoding = false;
+
+  startButton.disabled = false;
+
+  if (showMessage) {
+    sending = false;
+    showResult('Камеру зупинено');
+  }
+}
+
+window.addEventListener('pagehide', function() {
+  stopScanner(false);
+});
+</script>
 
 </body>
 </html>
