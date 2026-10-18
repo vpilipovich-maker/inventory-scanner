@@ -4,84 +4,131 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Інвентаризація V11</title>
+<title>Інвентаризація V11.1</title>
+
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+
 <style>
 *{box-sizing:border-box}
+
 body{
-  margin:0;padding:12px;
+  margin:0;
+  padding:12px;
   font-family:Arial,sans-serif;
   text-align:center;
-  background:#f5f6f8;color:#222
+  background:#f5f6f8;
+  color:#222;
 }
+
 h2{margin:10px 0 5px}
 p{color:#555}
+
 button{
-  border:0;border-radius:10px;
-  padding:13px 17px;margin:5px;
-  font-size:16px;color:white;
-  background:#1769aa;cursor:pointer
+  border:0;
+  border-radius:10px;
+  padding:13px 17px;
+  margin:5px;
+  font-size:16px;
+  color:white;
+  background:#1769aa;
+  cursor:pointer;
 }
+
 button:disabled{opacity:.5}
 .secondary{background:#666}
+
 .camera-box{
   position:relative;
   max-width:550px;
   margin:12px auto;
   background:#000;
   border-radius:12px;
-  overflow:hidden
+  overflow:hidden;
 }
-video{display:block;width:100%;height:auto}
+
+video{
+  display:block;
+  width:100%;
+  height:auto;
+}
+
 .scan-area{
   position:absolute;
-  left:12%;top:40%;
-  width:76%;height:20%;
+  left:12%;
+  top:40%;
+  width:76%;
+  height:20%;
   border:2px solid #00ff88;
   border-radius:8px;
-  pointer-events:none
+  pointer-events:none;
 }
+
 .scan-line{
   position:absolute;
-  left:15%;top:50%;
+  left:15%;
+  top:50%;
   width:70%;
   border-top:2px solid #00ff88;
-  pointer-events:none
+  pointer-events:none;
 }
+
+.hint{
+  max-width:550px;
+  margin:10px auto;
+  padding:10px;
+  border-radius:9px;
+  background:#e8f2ff;
+  color:#17578c;
+  font-size:15px;
+}
+
 #result{
   max-width:550px;
   margin:12px auto;
   padding:15px;
   border-radius:10px;
   background:#e5e7eb;
-  font-size:17px;font-weight:bold;
-  overflow-wrap:anywhere
+  font-size:17px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
 }
+
 #cameraInfo,#details{
   max-width:550px;
   margin:8px auto;
-  font-size:13px;color:#555
+  font-size:13px;
+  color:#555;
 }
+
 .manual{
   max-width:550px;
-  margin:15px auto
+  margin:15px auto;
 }
+
 .manual input{
-  width:100%;padding:12px;
+  width:100%;
+  padding:12px;
   font-size:18px;
   border:1px solid #aaa;
-  border-radius:9px
+  border-radius:9px;
 }
 </style>
 </head>
+
 <body>
 
 <h2>Інвентаризація обладнання</h2>
-<p>Code 128 — швидкий сканер V11</p>
+<p>Code 128 — сканер V11.1</p>
+
+<div class="hint">
+  Тримайте камеру на відстані 10–20 см.
+  Найкращий результат — приблизно 15 см.
+</div>
 
 <button id="startButton" onclick="startScanner()">
   Почати сканування
 </button>
+
 <button class="secondary" onclick="stopScanner()">
   Зупинити
 </button>
@@ -100,7 +147,9 @@ video{display:block;width:100%;height:auto}
   <input id="manualCode"
          type="text"
          placeholder="Інвентарний номер вручну">
-  <button onclick="sendManual()">Перевірити номер</button>
+  <button onclick="sendManual()">
+    Перевірити номер
+  </button>
 </div>
 
 <script>
@@ -124,8 +173,12 @@ let token=0;
 let timer=null;
 let startedAt=0;
 let frameCount=0;
-let nativeFailures=0;
-let nativeAvailable=false;
+
+let candidate='';
+let candidateCount=0;
+let candidateTime=0;
+let candidateFrame=-1;
+
 let lastScanMode='';
 
 const canvas=document.createElement('canvas');
@@ -158,10 +211,7 @@ function showPreviousResult(){
       '#b7e1cd'
     );
   }else if(status==='added'){
-    showResult(
-      'Додано: '+code,
-      '#fff3cd'
-    );
+    showResult('Додано: '+code,'#fff3cd');
   }else if(status==='cancelled'){
     showResult('Додавання скасовано');
   }
@@ -171,7 +221,7 @@ function showPreviousResult(){
   }
 
   history.replaceState(
-    {},'',location.pathname+'?v=11'
+    {},'',location.pathname+'?v=111'
   );
 }
 
@@ -199,12 +249,16 @@ async function openCamera(){
         'Запуск камери: режим '+(i+1);
 
       return await navigator.mediaDevices.getUserMedia({
-        audio:false,video:modes[i]
+        audio:false,
+        video:modes[i]
       });
     }catch(e){
       lastError=e;
+
       if(e.name==='NotAllowedError' ||
-         e.name==='SecurityError')throw e;
+         e.name==='SecurityError'){
+        throw e;
+      }
     }
   }
 
@@ -232,6 +286,7 @@ async function configureCamera(track){
         caps.zoom.min,
         Math.min(1,caps.zoom.max)
       );
+
       try{
         await track.applyConstraints({
           advanced:[{zoom}]
@@ -255,7 +310,6 @@ async function configureCamera(track){
 async function setupDecoders(){
   detector=null;
   reader=null;
-  nativeAvailable=false;
 
   if('BarcodeDetector' in window){
     try{
@@ -266,7 +320,6 @@ async function setupDecoders(){
         detector=new BarcodeDetector({
           formats:['code_128']
         });
-        nativeAvailable=true;
       }
     }catch(e){}
   }
@@ -290,7 +343,7 @@ async function setupDecoders(){
 
   if(!detector&&!reader){
     throw new Error(
-      'Бібліотека сканування недоступна'
+      'Механізм розпізнавання недоступний'
     );
   }
 }
@@ -298,6 +351,7 @@ async function setupDecoders(){
 function drawRegion(mode){
   const w=video.videoWidth;
   const h=video.videoHeight;
+
   if(!w||!h)return false;
 
   let sx,sy,sw,sh;
@@ -307,18 +361,13 @@ function drawRegion(mode){
     sy=Math.floor(h*.38);
     sw=Math.floor(w*.90);
     sh=Math.floor(h*.24);
-  }else if(mode==='wide'){
+  }else{
     sx=Math.floor(w*.02);
     sy=Math.floor(h*.25);
     sw=Math.floor(w*.96);
     sh=Math.floor(h*.50);
-  }else{
-    sx=0;sy=0;sw=w;sh=h;
   }
 
-  // Не зменшуємо штрихкод надмірно:
-  // тонкі смужки Code 128 мають залишатися
-  // розрізнюваними.
   const maxWidth=mode==='fast'?1280:1600;
   const scale=Math.min(1,maxWidth/sw);
 
@@ -326,7 +375,8 @@ function drawRegion(mode){
   canvas.height=Math.max(1,Math.round(sh*scale));
 
   ctx.drawImage(
-    video,sx,sy,sw,sh,
+    video,
+    sx,sy,sw,sh,
     0,0,canvas.width,canvas.height
   );
 
@@ -347,8 +397,10 @@ function decodeZXing(){
     );
 
     const result=reader.decode(bitmap);
+
     return result
-      ?String(result.getText()).trim():'';
+      ?String(result.getText()).trim()
+      :'';
   }catch(e){
     return '';
   }finally{
@@ -360,8 +412,8 @@ function enhanceContrast(){
   const img=ctx.getImageData(
     0,0,canvas.width,canvas.height
   );
-  const data=img.data;
 
+  const data=img.data;
   let min=255,max=0;
 
   for(let i=0;i<data.length;i+=4){
@@ -395,13 +447,14 @@ async function startScanner(){
 
   if(!navigator.mediaDevices?.getUserMedia){
     showResult(
-      'Браузер не підтримує камеру',
+      'Камера недоступна',
       '#f4cccc'
     );
     return;
   }
 
   const current=++token;
+
   scanning=true;
   startButton.disabled=true;
 
@@ -431,20 +484,25 @@ async function startScanner(){
 
     startedAt=performance.now();
     frameCount=0;
-    nativeFailures=0;
+
+    candidate='';
+    candidateCount=0;
+    candidateTime=0;
+    candidateFrame=-1;
 
     showResult('Наведіть штрихкод у рамку');
 
-    details.textContent=
-      nativeAvailable
-      ?'Швидкий режим: BarcodeDetector'
-      :'Швидкий режим: ZXing';
+    details.textContent=detector
+      ?'Режим: BarcodeDetector + ZXing'
+      :'Режим: ZXing';
 
     schedule(current,0);
 
   }catch(e){
     if(current!==token)return;
+
     stopScanner(false);
+
     showResult(
       'Помилка: '+e.message,
       '#f4cccc'
@@ -460,6 +518,42 @@ function schedule(current,delay=40){
   },delay);
 }
 
+function registerCandidate(code,mode){
+  const now=performance.now();
+
+  if(candidate===code &&
+     now-candidateTime<2000 &&
+     candidateFrame!==frameCount){
+    candidateCount++;
+  }else{
+    candidate=code;
+    candidateCount=1;
+  }
+
+  candidateTime=now;
+  candidateFrame=frameCount;
+
+  if(candidateCount>=2){
+    lastScanMode=mode;
+
+    const seconds=(
+      (now-startedAt)/1000
+    ).toFixed(2);
+
+    details.textContent=
+      'Підтверджено за '+seconds+
+      ' с | '+lastScanMode;
+
+    sendBarcode(code);
+  }else{
+    showResult(
+      'Зчитано: '+code+
+      '. Перевіряємо повторно...',
+      '#fff3cd'
+    );
+  }
+}
+
 async function scanFrame(current){
   if(!scanning||
      sending||
@@ -473,19 +567,14 @@ async function scanFrame(current){
 
     const elapsed=performance.now()-startedAt;
 
-    // Перші 1,2 секунди: лише швидкий режим.
-    // Далі підключаємо резервний механізм.
-    // Після 2,5 секунди — додаткові області.
-    let mode='fast';
-
-    if(elapsed>2500){
-      mode=frameCount%3===0
-        ?'wide':'fast';
-    }
+    const mode=elapsed>2500 &&
+      frameCount%3===0
+      ?'wide':'fast';
 
     if(!drawRegion(mode))return;
 
     let code='';
+    let scanMode='';
 
     if(detector){
       try{
@@ -499,47 +588,31 @@ async function scanFrame(current){
 
         if(item){
           code=String(item.rawValue||'').trim();
-          lastScanMode='BarcodeDetector';
-        }else{
-          nativeFailures++;
+          scanMode='BarcodeDetector';
         }
-      }catch(e){
-        nativeFailures++;
-      }
+      }catch(e){}
     }
 
-    // ZXing використовується не на кожному
-    // кадрі, якщо BarcodeDetector доступний.
     const useZXing=
       !detector ||
       (elapsed>1200 && frameCount%3===0);
 
     if(!code&&reader&&useZXing){
       code=decodeZXing();
-      if(code)lastScanMode='ZXing';
+      if(code)scanMode='ZXing';
     }
 
-    // Контрастність лише після 2,5 секунди
-    // і не на кожному кадрі.
     if(!code&&reader&&elapsed>2500 &&
        frameCount%10===0){
       drawRegion('wide');
       enhanceContrast();
       code=decodeZXing();
-      if(code)lastScanMode='ZXing + контраст';
+
+      if(code)scanMode='ZXing + контраст';
     }
 
     if(validCode(code)){
-      const seconds=(
-        (performance.now()-startedAt)/1000
-      ).toFixed(2);
-
-      details.textContent=
-        'Розпізнавання: '+seconds+
-        ' с | '+lastScanMode;
-
-      sendBarcode(code);
-      return;
+      registerCandidate(code,scanMode);
     }
 
   }catch(e){
@@ -553,6 +626,7 @@ async function scanFrame(current){
 
 function sendBarcode(code){
   code=String(code||'').trim();
+
   if(!validCode(code)||sending)return;
 
   sending=true;
@@ -563,8 +637,8 @@ function sendBarcode(code){
   }
 
   showResult(
-    'Зчитано: '+code+'. Передаємо...',
-    '#fff3cd'
+    'Підтверджено: '+code+'. Передаємо...',
+    '#b7e1cd'
   );
 
   const url=SCRIPT_URL+
