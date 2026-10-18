@@ -3,123 +3,112 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Інвентаризація — V9.1</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Інвентаризація V9.2</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <style>
-* { box-sizing: border-box; }
+* { box-sizing:border-box; }
 
 body {
-  margin: 0;
-  padding: 15px;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #f5f6f8;
-  color: #222;
+  margin:0;
+  padding:14px;
+  font-family:Arial,sans-serif;
+  background:#f5f6f8;
+  text-align:center;
+  color:#222;
 }
 
-h2 { margin: 8px 0; }
-p { color: #555; }
+h2 { margin:12px 0 6px; }
+p { color:#555; }
 
 button {
-  border: none;
-  border-radius: 10px;
-  padding: 13px 17px;
-  margin: 5px;
-  font-size: 16px;
-  color: white;
-  background: #1769aa;
-  cursor: pointer;
+  background:#1769aa;
+  color:white;
+  border:0;
+  border-radius:10px;
+  padding:13px 16px;
+  font-size:16px;
+  margin:5px;
 }
 
-button:disabled { opacity: 0.5; }
+button:disabled { opacity:.5; }
 
-.secondary { background: #666; }
-.success { background: #18834a; }
+.secondary { background:#666; }
 
 .camera-box {
-  position: relative;
-  max-width: 550px;
-  margin: 12px auto;
-  background: black;
-  border-radius: 12px;
-  overflow: hidden;
+  position:relative;
+  max-width:550px;
+  margin:15px auto;
+  background:black;
+  border-radius:12px;
+  overflow:hidden;
 }
 
 video {
-  display: block;
-  width: 100%;
-  height: auto;
+  display:block;
+  width:100%;
+  height:auto;
 }
 
 .scan-area {
-  position: absolute;
-  left: 5%;
-  top: 35%;
-  width: 90%;
-  height: 30%;
-  border: 2px solid #00ff88;
-  border-radius: 8px;
-  pointer-events: none;
+  position:absolute;
+  left:20%;
+  top:42%;
+  width:60%;
+  height:16%;
+  border:2px solid #00ff88;
+  border-radius:8px;
+  pointer-events:none;
 }
 
 .scan-line {
-  position: absolute;
-  top: 50%;
-  left: 8%;
-  width: 84%;
-  border-top: 2px solid #00ff88;
-  pointer-events: none;
+  position:absolute;
+  left:23%;
+  top:50%;
+  width:54%;
+  border-top:2px solid #00ff88;
+  pointer-events:none;
 }
 
 #result {
-  max-width: 550px;
-  margin: 12px auto;
-  padding: 15px;
-  border-radius: 10px;
-  background: #e5e7eb;
-  font-size: 17px;
-  font-weight: bold;
-  overflow-wrap: anywhere;
+  max-width:550px;
+  margin:12px auto;
+  padding:15px;
+  border-radius:10px;
+  background:#e5e7eb;
+  font-size:17px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
 }
 
-#cameraInfo, #details {
-  max-width: 550px;
-  margin: 8px auto;
-  font-size: 13px;
-  color: #555;
-  overflow-wrap: anywhere;
+#cameraInfo,#details {
+  font-size:13px;
+  color:#555;
+  margin:10px auto;
+  max-width:550px;
 }
 
-#confirmation {
-  display: none;
-  max-width: 550px;
-  margin: 12px auto;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  background: white;
+.manual {
+  max-width:550px;
+  margin:15px auto;
 }
 
-#confirmation input {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  font-size: 19px;
-  border: 1px solid #aaa;
-  border-radius: 8px;
+.manual input {
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  border:1px solid #aaa;
+  border-radius:9px;
 }
-
-#requestFrame { display: none; }
 </style>
 </head>
 
 <body>
 
 <h2>Інвентаризація обладнання</h2>
-<p>Code 128 — сканер V9.1</p>
+<p>Code 128 — сканер V9.2</p>
 
 <button id="startButton" onclick="startScanner()">
   Почати сканування
@@ -135,39 +124,18 @@ video {
   <div class="scan-line"></div>
 </div>
 
-<div id="result">
-  Натисніть «Почати сканування»
-</div>
-
+<div id="result">Очікування сканування...</div>
 <div id="cameraInfo"></div>
 <div id="details"></div>
 
-<div id="confirmation">
-  <h3 id="confirmTitle">Підтвердження номера</h3>
-  <p id="confirmDescription"></p>
-
-  <input id="barcodeInput"
+<div class="manual">
+  <input id="manualCode"
          type="text"
-         autocomplete="off">
-
-  <button id="confirmButton"
-          class="success"
-          onclick="confirmBarcode()">
-    Підтвердити
-  </button>
-
-  <button class="secondary"
-          onclick="cancelConfirmation()">
-    Скасувати
+         placeholder="Інвентарний номер вручну">
+  <button onclick="sendManual()">
+    Перевірити номер
   </button>
 </div>
-
-<button class="secondary" onclick="manualEntry()">
-  Ввести номер вручну
-</button>
-
-<iframe id="requestFrame"
-        title="Обмін із таблицею"></iframe>
 
 <script>
 'use strict';
@@ -180,279 +148,235 @@ const resultBox = document.getElementById('result');
 const cameraInfo = document.getElementById('cameraInfo');
 const details = document.getElementById('details');
 const startButton = document.getElementById('startButton');
-const confirmation = document.getElementById('confirmation');
-const barcodeInput = document.getElementById('barcodeInput');
-const confirmTitle = document.getElementById('confirmTitle');
-const confirmDescription =
-  document.getElementById('confirmDescription');
-const confirmButton =
-  document.getElementById('confirmButton');
-const requestFrame =
-  document.getElementById('requestFrame');
 
 let stream = null;
 let reader = null;
-let scanning = false;
-let processing = false;
-let decoding = false;
 let scanTimer = null;
+let scanning = false;
+let decoding = false;
+let sending = false;
 let startToken = 0;
-
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d', {
-  willReadFrequently: true
-});
-
 let frameNumber = 0;
+
 let candidate = '';
 let candidateCount = 0;
 let candidateTime = 0;
-let confirmMode = '';
-let pendingRequest = null;
-let requestTimer = null;
 
-function showResult(message, color = '#e5e7eb') {
-  resultBox.textContent = message;
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d', {
+  willReadFrequently:true
+});
+
+function showResult(text, color='#e5e7eb') {
+  resultBox.textContent = text;
   resultBox.style.background = color;
 }
 
-function setDetails(message) {
-  details.textContent = message;
+function showPreviousResult() {
+  const params = new URLSearchParams(location.search);
+  const status = params.get('status');
+  const code = params.get('barcode');
+  const row = params.get('row');
+
+  if (!status) return;
+
+  if (status === 'found') {
+    showResult(
+      'Знайдено: ' + code + '. Позначено зеленим.',
+      '#b7e1cd'
+    );
+  } else if (status === 'added') {
+    showResult(
+      'Новий номер додано: ' + code,
+      '#fff3cd'
+    );
+  } else if (status === 'cancelled') {
+    showResult(
+      'Додавання скасовано: ' + code
+    );
+  }
+
+  if (row) {
+    details.textContent = 'Рядок таблиці: ' + row;
+  }
+
+  // Прибираємо параметри результату,
+  // щоб він не повторювався при оновленні.
+  history.replaceState(
+    {},
+    '',
+    location.pathname + '?v=92'
+  );
 }
 
-function cleanCode(value) {
-  return String(value || '').trim();
-}
-
-function validCode(code) {
-  return code.length > 0 && code.length <= 150;
-}
-
-// Автоматичний вибір доступного режиму камери
 async function openCamera() {
-  const cameraModes = [
+  const modes = [
     {
-      facingMode: { ideal: 'environment' },
-      width: { ideal: 2560 },
-      height: { ideal: 1440 }
+      facingMode:{ideal:'environment'},
+      width:{ideal:2560},
+      height:{ideal:1440}
     },
     {
-      facingMode: { ideal: 'environment' },
-      width: { ideal: 1920 },
-      height: { ideal: 1080 }
+      facingMode:{ideal:'environment'},
+      width:{ideal:1920},
+      height:{ideal:1080}
     },
     {
-      facingMode: { ideal: 'environment' }
+      facingMode:{ideal:'environment'}
     },
     true
   ];
 
-  let lastError = null;
+  let lastError;
 
-  for (let i = 0; i < cameraModes.length; i++) {
+  for (let i=0; i<modes.length; i++) {
     try {
-      setDetails(
-        'Запуск камери: спроба ' +
-        (i + 1) + ' із ' + cameraModes.length
-      );
+      details.textContent =
+        'Запуск камери: режим ' + (i+1);
 
-      const openedStream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: cameraModes[i]
-        });
+      return await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:modes[i]
+      });
+    } catch (e) {
+      lastError=e;
 
-      return openedStream;
-
-    } catch (error) {
-      lastError = error;
-
-      // Якщо доступ заборонений, інші режими
-      // не допоможуть.
-      if (error.name === 'NotAllowedError' ||
-          error.name === 'SecurityError') {
-        throw error;
+      if (e.name==='NotAllowedError' ||
+          e.name==='SecurityError') {
+        throw e;
       }
     }
   }
 
   throw lastError ||
-    new Error('Не вдалося відкрити камеру');
+    new Error('Камера недоступна');
 }
 
 async function startScanner() {
-  if (scanning || processing) return;
+  if (scanning || sending) return;
 
   if (!window.ZXing) {
-    showResult(
-      'Не завантажилась бібліотека ZXing',
-      '#f4cccc'
-    );
+    showResult('ZXing не завантажено','#f4cccc');
     return;
   }
 
-  if (!navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia) {
-    showResult(
-      'Браузер не підтримує камеру',
-      '#f4cccc'
-    );
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showResult('Камера недоступна','#f4cccc');
     return;
   }
 
-  const token = ++startToken;
-
-  scanning = true;
-  startButton.disabled = true;
-  confirmation.style.display = 'none';
+  const token=++startToken;
+  scanning=true;
+  startButton.disabled=true;
 
   try {
     showResult('Запускаємо камеру...');
 
-    const openedStream = await openCamera();
+    const opened=await openCamera();
 
-    if (!scanning || token !== startToken) {
-      openedStream.getTracks().forEach(t => t.stop());
+    if (!scanning || token!==startToken) {
+      opened.getTracks().forEach(t=>t.stop());
       return;
     }
 
-    stream = openedStream;
-    video.srcObject = stream;
-
+    stream=opened;
+    video.srcObject=stream;
     await video.play();
 
-    if (!scanning || token !== startToken) {
-      return;
-    }
+    if (!scanning || token!==startToken) return;
 
-    const track = stream.getVideoTracks()[0];
+    const track=stream.getVideoTracks()[0];
     await configureCamera(track);
 
-    const hints = new Map();
-
+    const hints=new Map();
     hints.set(
       ZXing.DecodeHintType.POSSIBLE_FORMATS,
       [ZXing.BarcodeFormat.CODE_128]
     );
-
     hints.set(
       ZXing.DecodeHintType.TRY_HARDER,
       true
     );
 
-    reader = new ZXing.MultiFormatReader();
+    reader=new ZXing.MultiFormatReader();
     reader.setHints(hints);
 
-    candidate = '';
-    candidateCount = 0;
-    candidateTime = 0;
-    frameNumber = 0;
+    candidate='';
+    candidateCount=0;
+    frameNumber=0;
 
     showResult('Наведіть штрихкод у зелену рамку');
-    setDetails('Режим: автоматичне сканування');
 
-    scanTimer = setInterval(scanFrame, 180);
-
-  } catch (error) {
-    if (token !== startToken) return;
+    scanTimer=setInterval(scanFrame,180);
+  } catch(e) {
+    if (token!==startToken) return;
 
     stopScanner(false);
 
     showResult(
-      'Помилка камери: ' +
-      error.message,
+      'Помилка камери: '+e.message,
       '#f4cccc'
     );
-
-    setDetails(
-      'Тип помилки: ' +
-      (error.name || 'невідомий')
-    );
+    details.textContent='Тип: '+e.name;
   }
 }
 
 async function configureCamera(track) {
-  const info = [];
-
   try {
-    const caps = track.getCapabilities
+    const caps=track.getCapabilities
       ? track.getCapabilities()
       : {};
 
-    if (caps.focusMode &&
-        caps.focusMode.includes('continuous')) {
+    if (caps.focusMode?.includes('continuous')) {
       try {
         await track.applyConstraints({
-          advanced: [{
-            focusMode: 'continuous'
-          }]
+          advanced:[{focusMode:'continuous'}]
         });
-      } catch (e) {}
+      } catch(e) {}
     }
 
-    // Залишаємо Zoom 1x
     if (caps.zoom &&
         Number.isFinite(caps.zoom.min) &&
         Number.isFinite(caps.zoom.max)) {
-
-      const zoom = Math.max(
+      const zoom=Math.max(
         caps.zoom.min,
-        Math.min(1, caps.zoom.max)
+        Math.min(1,caps.zoom.max)
       );
 
       try {
         await track.applyConstraints({
-          advanced: [{ zoom: zoom }]
+          advanced:[{zoom}]
         });
-      } catch (e) {}
+      } catch(e) {}
     }
 
-    const settings = track.getSettings();
+    const s=track.getSettings();
 
-    info.push(
-      'Відео: ' +
-      (settings.width || video.videoWidth) +
-      '×' +
-      (settings.height || video.videoHeight)
-    );
-
-    info.push(
-      'Zoom: ' +
-      (settings.zoom === undefined
-        ? 'автоматичний'
-        : settings.zoom + '×')
-    );
-
-    info.push(
-      'Фокус: ' +
-      (settings.focusMode || 'автоматичний')
-    );
-
-  } catch (e) {
-    info.push('Стандартні параметри камери');
+    cameraInfo.textContent=
+      'Відео: '+(s.width||video.videoWidth)+
+      '×'+(s.height||video.videoHeight)+
+      ' | Zoom: '+(s.zoom??'авто')+
+      ' | Фокус: '+(s.focusMode||'авто');
+  } catch(e) {
+    cameraInfo.textContent=
+      'Камера: стандартні налаштування';
   }
-
-  cameraInfo.textContent = info.join(' | ');
 }
 
-function decodeCanvas() {
-  const source =
-    new ZXing.HTMLCanvasElementLuminanceSource(
-      canvas
+function decodeImage() {
+  try {
+    const source=
+      new ZXing.HTMLCanvasElementLuminanceSource(
+        canvas
+      );
+
+    const bitmap=new ZXing.BinaryBitmap(
+      new ZXing.HybridBinarizer(source)
     );
 
-  const bitmap = new ZXing.BinaryBitmap(
-    new ZXing.HybridBinarizer(source)
-  );
-
-  try {
-    const result = reader.decode(bitmap);
-
-    return result
-      ? cleanCode(result.getText())
-      : '';
-
-  } catch (error) {
+    const result=reader.decode(bitmap);
+    return result ? result.getText().trim() : '';
+  } catch(e) {
     return '';
   } finally {
     reader.reset();
@@ -460,464 +384,188 @@ function decodeCanvas() {
 }
 
 function enhanceContrast(strength) {
-  const image = ctx.getImageData(
-    0, 0,
-    canvas.width,
-    canvas.height
+  const image=ctx.getImageData(
+    0,0,canvas.width,canvas.height
   );
 
-  const data = image.data;
+  const data=image.data;
+  let min=255,max=0;
 
-  let min = 255;
-  let max = 0;
+  for(let i=0;i<data.length;i+=4) {
+    const g=.299*data[i]+
+      .587*data[i+1]+
+      .114*data[i+2];
 
-  for (let i = 0; i < data.length; i += 4) {
-    const gray =
-      0.299 * data[i] +
-      0.587 * data[i + 1] +
-      0.114 * data[i + 2];
-
-    min = Math.min(min, gray);
-    max = Math.max(max, gray);
+    if(g<min) min=g;
+    if(g>max) max=g;
   }
 
-  const range = Math.max(1, max - min);
+  const range=Math.max(1,max-min);
 
-  for (let i = 0; i < data.length; i += 4) {
-    const gray =
-      0.299 * data[i] +
-      0.587 * data[i + 1] +
-      0.114 * data[i + 2];
+  for(let i=0;i<data.length;i+=4) {
+    const g=.299*data[i]+
+      .587*data[i+1]+
+      .114*data[i+2];
 
-    let value =
-      ((gray - min) / range) * 255;
+    let v=((g-min)/range)*255;
+    v=(v-127.5)*strength+127.5;
+    v=Math.max(0,Math.min(255,v));
 
-    value =
-      (value - 127.5) * strength + 127.5;
-
-    value = Math.max(
-      0,
-      Math.min(255, value)
-    );
-
-    data[i] = value;
-    data[i + 1] = value;
-    data[i + 2] = value;
+    data[i]=data[i+1]=data[i+2]=v;
   }
 
-  ctx.putImageData(image, 0, 0);
+  ctx.putImageData(image,0,0);
 }
 
 function scanFrame() {
-  if (!scanning ||
-      processing ||
-      decoding ||
-      !reader ||
-      video.readyState < 2) {
-    return;
-  }
+  if(!scanning || sending || decoding ||
+     !reader || video.readyState<2) return;
 
-  decoding = true;
+  decoding=true;
 
   try {
-    const width = video.videoWidth;
-    const height = video.videoHeight;
+    const w=video.videoWidth;
+    const h=video.videoHeight;
 
-    if (!width || !height) return;
+    if(!w || !h) return;
 
     frameNumber++;
 
-    const mode = frameNumber % 3;
+    // Компактна рамка — лише орієнтир.
+    // Для розпізнавання використовуємо
+    // більшу область, щоб не обрізати код.
+    const mode=frameNumber%3;
 
-    let sx, sy, sw, sh;
+    let sx=0,sy=0,sw=w,sh=h;
 
-    if (mode === 0) {
-      sx = Math.floor(width * 0.05);
-      sy = Math.floor(height * 0.35);
-      sw = Math.floor(width * 0.90);
-      sh = Math.floor(height * 0.30);
-    } else if (mode === 1) {
-      sx = 0;
-      sy = Math.floor(height * 0.20);
-      sw = width;
-      sh = Math.floor(height * 0.60);
-    } else {
-      sx = 0;
-      sy = 0;
-      sw = width;
-      sh = height;
+    if(mode===0) {
+      sx=Math.floor(w*.05);
+      sy=Math.floor(h*.35);
+      sw=Math.floor(w*.90);
+      sh=Math.floor(h*.30);
+    } else if(mode===1) {
+      sy=Math.floor(h*.20);
+      sh=Math.floor(h*.60);
     }
 
-    canvas.width = sw;
-    canvas.height = sh;
+    canvas.width=sw;
+    canvas.height=sh;
 
     ctx.drawImage(
       video,
-      sx, sy, sw, sh,
-      0, 0, sw, sh
+      sx,sy,sw,sh,
+      0,0,sw,sh
     );
 
-    // Звичайне розпізнавання
-    let code = decodeCanvas();
+    let code=decodeImage();
 
-    // Посилення контрасту для вицвілих кодів
-    if (!code && frameNumber % 3 === 0) {
+    if(!code && frameNumber%3===0) {
       enhanceContrast(1.5);
-      code = decodeCanvas();
+      code=decodeImage();
     }
 
-    if (!code && frameNumber % 9 === 0) {
+    if(!code && frameNumber%9===0) {
       enhanceContrast(1.4);
-      code = decodeCanvas();
+      code=decodeImage();
     }
 
-    if (code && validCode(code)) {
+    if(code && code.length<=150) {
       registerCandidate(code);
     }
-
-  } catch (error) {
-    console.warn('Помилка ZXing:', error);
+  } catch(e) {
+    console.warn(e);
   } finally {
-    decoding = false;
+    decoding=false;
   }
 }
 
 function registerCandidate(code) {
-  const now = Date.now();
+  const now=Date.now();
 
-  if (candidate === code &&
-      now - candidateTime < 3000) {
+  if(candidate===code &&
+     now-candidateTime<3000) {
     candidateCount++;
   } else {
-    candidate = code;
-    candidateCount = 1;
+    candidate=code;
+    candidateCount=1;
   }
 
-  candidateTime = now;
+  candidateTime=now;
 
-  if (candidateCount < 2) {
+  if(candidateCount<2) {
     showResult(
-      'Зчитано: ' + code +
-      '. Підтверджуємо...',
+      'Зчитано: '+code+'. Підтверджуємо...',
       '#fff3cd'
     );
     return;
   }
 
-  processing = true;
-  pauseScanner();
+  sendBarcode(code);
+}
 
-  if (navigator.vibrate) {
-    navigator.vibrate(120);
-  }
+function sendBarcode(code) {
+  code=String(code||'').trim();
+
+  if(!code || code.length>150 || sending) return;
+
+  sending=true;
+  stopScanner(false);
+
+  if(navigator.vibrate) navigator.vibrate(150);
 
   showResult(
-    'Перевіряємо номер: ' + code,
+    'Передаємо номер: '+code,
     '#fff3cd'
   );
 
-  sendRequest('check', code)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(
-          response.message || 'Помилка'
-        );
-      }
+  const url=SCRIPT_URL+
+    '?action=scan&barcode='+
+    encodeURIComponent(code);
 
-      if (response.found) {
-        return sendRequest('mark', code);
-      }
-
-      showConfirmation(
-        code,
-        'add',
-        'Номер відсутній у таблиці. ' +
-        'Перевірте його перед додаванням.'
-      );
-
-      return null;
-    })
-    .then(response => {
-      if (!response) return;
-
-      if (!response.ok || !response.found) {
-        throw new Error(
-          response.message ||
-          'Не вдалося позначити номер'
-        );
-      }
-
-      showResult(
-        'Знайдено: ' + code +
-        '. Позначено зеленим.',
-        '#b7e1cd'
-      );
-
-      setDetails(
-        'Рядок таблиці: ' + response.row
-      );
-
-      finishProcessing();
-    })
-    .catch(error => {
-      showResult(
-        'Помилка зв’язку: ' +
-        error.message,
-        '#f4cccc'
-      );
-
-      showConfirmation(
-        code,
-        'retry',
-        'Не вдалося перевірити номер. ' +
-        'Повторіть запит.'
-      );
-    });
+  window.location.assign(url);
 }
 
-function showConfirmation(code, mode, description) {
-  confirmMode = mode;
-  barcodeInput.value = code;
+function sendManual() {
+  const input=document.getElementById('manualCode');
+  const code=input.value.trim();
 
-  confirmTitle.textContent =
-    mode === 'add'
-      ? 'Номер не знайдено'
-      : 'Повторна перевірка';
-
-  confirmDescription.textContent =
-    description;
-
-  confirmButton.textContent =
-    mode === 'add'
-      ? 'Додати в таблицю'
-      : 'Перевірити повторно';
-
-  confirmation.style.display = 'block';
-}
-
-async function confirmBarcode() {
-  const code = cleanCode(
-    barcodeInput.value
-  );
-
-  if (!validCode(code)) {
-    showResult(
-      'Введіть коректний номер',
-      '#f4cccc'
-    );
+  if(!code) {
+    showResult('Введіть інвентарний номер','#f4cccc');
     return;
   }
 
-  confirmButton.disabled = true;
-
-  try {
-    if (confirmMode === 'add') {
-      const response =
-        await sendRequest('add', code);
-
-      if (!response.ok) {
-        throw new Error(response.message);
-      }
-
-      showResult(
-        response.found
-          ? 'Знайдено: ' + code
-          : 'Додано: ' + code,
-        response.found
-          ? '#b7e1cd'
-          : '#fff3cd'
-      );
-
-      setDetails(
-        'Рядок таблиці: ' + response.row
-      );
-
-      confirmation.style.display = 'none';
-      finishProcessing();
-
-    } else {
-      const response =
-        await sendRequest('check', code);
-
-      if (!response.ok) {
-        throw new Error(response.message);
-      }
-
-      if (response.found) {
-        const marked =
-          await sendRequest('mark', code);
-
-        if (!marked.ok || !marked.found) {
-          throw new Error(marked.message);
-        }
-
-        showResult(
-          'Знайдено та позначено: ' + code,
-          '#b7e1cd'
-        );
-
-        confirmation.style.display = 'none';
-        finishProcessing();
-
-      } else {
-        showConfirmation(
-          code,
-          'add',
-          'Номер відсутній. ' +
-          'Підтвердіть додавання.'
-        );
-      }
-    }
-
-  } catch (error) {
-    showResult(
-      'Помилка: ' + error.message,
-      '#f4cccc'
-    );
-  } finally {
-    confirmButton.disabled = false;
-  }
+  sendBarcode(code);
 }
 
-function cancelConfirmation() {
-  confirmation.style.display = 'none';
-  showResult('Операцію скасовано');
-  finishProcessing();
-}
-
-function manualEntry() {
-  pauseScanner();
-  processing = true;
-
-  showConfirmation(
-    '',
-    'retry',
-    'Введіть інвентарний номер вручну.'
-  );
-}
-
-function pauseScanner() {
-  scanning = false;
+function stopScanner(showMessage=true) {
+  scanning=false;
   startToken++;
 
-  if (scanTimer) {
+  if(scanTimer) {
     clearInterval(scanTimer);
-    scanTimer = null;
+    scanTimer=null;
   }
 
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    stream = null;
+  if(stream) {
+    stream.getTracks().forEach(t=>t.stop());
+    stream=null;
   }
 
-  video.srcObject = null;
-  reader = null;
-  startButton.disabled = false;
-}
+  video.srcObject=null;
+  reader=null;
+  startButton.disabled=false;
 
-function stopScanner(showMessage = true) {
-  pauseScanner();
-
-  processing = false;
-  candidate = '';
-  candidateCount = 0;
-
-  confirmation.style.display = 'none';
-
-  if (showMessage) {
+  if(showMessage) {
+    sending=false;
     showResult('Сканування зупинено');
   }
 }
 
-function finishProcessing() {
-  processing = false;
-  candidate = '';
-  candidateCount = 0;
-  startButton.disabled = false;
-}
-
-function sendRequest(action, barcode) {
-  if (pendingRequest) {
-    return Promise.reject(
-      new Error('Попередній запит ще виконується')
-    );
-  }
-
-  const requestId =
-    Date.now().toString(36) + '-' +
-    Math.random().toString(36).slice(2);
-
-  const url = new URL(SCRIPT_URL);
-
-  url.searchParams.set('action', action);
-  url.searchParams.set('barcode', barcode);
-  url.searchParams.set('requestId', requestId);
-
-  return new Promise((resolve, reject) => {
-    pendingRequest = {
-      requestId,
-      resolve,
-      reject
-    };
-
-    requestTimer = setTimeout(() => {
-      if (pendingRequest &&
-          pendingRequest.requestId === requestId) {
-        pendingRequest = null;
-        requestTimer = null;
-
-        reject(
-          new Error(
-            'Час очікування відповіді минув'
-          )
-        );
-      }
-    }, 15000);
-
-    requestFrame.src = url.toString();
-  });
-}
-
-window.addEventListener('message', event => {
-  if (!pendingRequest) return;
-
-  if (event.source !==
-      requestFrame.contentWindow) {
-    return;
-  }
-
-  const allowedOrigin =
-    /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/i
-      .test(event.origin) ||
-    event.origin ===
-      'https://script.google.com';
-
-  if (!allowedOrigin) return;
-
-  const data = event.data;
-
-  if (!data ||
-      typeof data !== 'object') {
-    return;
-  }
-
-  if (data.requestId !==
-      pendingRequest.requestId) {
-    return;
-  }
-
-  const request = pendingRequest;
-  pendingRequest = null;
-
-  clearTimeout(requestTimer);
-  requestTimer = null;
-
-  request.resolve(data);
+window.addEventListener('pagehide',()=>{
+  stopScanner(false);
 });
 
-window.addEventListener('pagehide', () => {
-  pauseScanner();
-});
+showPreviousResult();
 </script>
 
 </body>
