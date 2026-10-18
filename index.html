@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Інвентаризація V12.1</title>
+<title>Інвентаризація V12.2</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
@@ -43,7 +43,7 @@ video{display:block;width:100%;height:auto}
 </head>
 
 <body>
-<h2>Інвентаризація V12.1</h2>
+<h2>Інвентаризація V12.2</h2>
 <p>Безперервне сканування Code 128 зі звуком</p>
 
 <div class="hint">
@@ -149,7 +149,7 @@ const ctx = canvas.getContext('2d', {
   willReadFrequently: true
 });
 
-// ===== ЗВУК =====
+// ===== ГУЧНИЙ ЗВУК =====
 
 let audioContext = null;
 
@@ -189,21 +189,21 @@ function tone(hz, duration, offset = 0) {
   const o = audioContext.createOscillator();
   const g = audioContext.createGain();
 
-  o.type = 'sine';
+  // Різкіший, чіткіший звук
+  o.type = 'square';
   o.frequency.setValueAtTime(hz, t);
 
+  // Підвищений рівень сигналу
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.22, t + 0.015);
-  g.gain.exponentialRampToValueAtTime(
-    0.0001,
-    t + duration
-  );
+  g.gain.linearRampToValueAtTime(0.65, t + 0.008);
+  g.gain.setValueAtTime(0.65, t + duration - 0.02);
+  g.gain.linearRampToValueAtTime(0.0001, t + duration);
 
   o.connect(g);
   g.connect(audioContext.destination);
 
   o.start(t);
-  o.stop(t + duration + 0.025);
+  o.stop(t + duration + 0.02);
 }
 
 function sound(type) {
