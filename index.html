@@ -3,8 +3,10 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Інвентаризація V11.1</title>
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+
+<title>Інвентаризація V12</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
@@ -20,28 +22,28 @@ body{
   color:#222;
 }
 
-h2{margin:10px 0 5px}
+h2{margin:8px 0}
 p{color:#555}
 
 button{
   border:0;
-  border-radius:10px;
-  padding:13px 17px;
+  border-radius:9px;
+  padding:12px 17px;
   margin:5px;
   font-size:16px;
   color:white;
   background:#1769aa;
-  cursor:pointer;
 }
 
 button:disabled{opacity:.5}
-.secondary{background:#666}
+.gray{background:#666}
+.red{background:#b3261e}
 
 .camera-box{
   position:relative;
   max-width:550px;
   margin:12px auto;
-  background:#000;
+  background:black;
   border-radius:12px;
   overflow:hidden;
 }
@@ -79,7 +81,6 @@ video{
   border-radius:9px;
   background:#e8f2ff;
   color:#17578c;
-  font-size:15px;
 }
 
 #result{
@@ -88,16 +89,35 @@ video{
   padding:15px;
   border-radius:10px;
   background:#e5e7eb;
-  font-size:17px;
+  font-size:18px;
   font-weight:bold;
   overflow-wrap:anywhere;
 }
 
-#cameraInfo,#details{
-  max-width:550px;
-  margin:8px auto;
+#details{
   font-size:13px;
   color:#555;
+  margin:8px auto;
+}
+
+.stats{
+  display:flex;
+  gap:8px;
+  max-width:550px;
+  margin:12px auto;
+}
+
+.stat{
+  flex:1;
+  padding:12px 5px;
+  background:white;
+  border-radius:9px;
+  border:1px solid #ddd;
+}
+
+.stat strong{
+  display:block;
+  font-size:25px;
 }
 
 .manual{
@@ -112,24 +132,60 @@ video{
   border:1px solid #aaa;
   border-radius:9px;
 }
+
+#confirmBox{
+  display:none;
+  max-width:550px;
+  margin:12px auto;
+  padding:16px;
+  background:#fff1cc;
+  border:1px solid #e1bd62;
+  border-radius:10px;
+}
+
+#confirmCode{
+  font-size:24px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+#history{
+  max-width:550px;
+  margin:15px auto;
+  text-align:left;
+}
+
+.history-item{
+  background:white;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border-left:5px solid #aaa;
+  overflow-wrap:anywhere;
+}
+
+.history-item.found{border-color:#188038}
+.history-item.added{border-color:#c68100}
+.history-item.error{border-color:#c62828}
 </style>
 </head>
 
 <body>
 
-<h2>Інвентаризація обладнання</h2>
-<p>Code 128 — сканер V11.1</p>
+<h2>Інвентаризація V12</h2>
+<p>Безперервне сканування Code 128</p>
 
 <div class="hint">
-  Тримайте камеру на відстані 10–20 см.
-  Найкращий результат — приблизно 15 см.
+  Тримайте штрихкод приблизно за 15 см
+  від камери. Після зчитування наведіть
+  камеру на наступний пристрій.
 </div>
 
-<button id="startButton" onclick="startScanner()">
+<button id="startBtn" onclick="startScanner()">
   Почати сканування
 </button>
 
-<button class="secondary" onclick="stopScanner()">
+<button class="gray" onclick="stopScanner()">
   Зупинити
 </button>
 
@@ -140,17 +196,48 @@ video{
 </div>
 
 <div id="result">Очікування сканування...</div>
-<div id="cameraInfo"></div>
 <div id="details"></div>
+
+<div class="stats">
+  <div class="stat">
+    <strong id="foundCount">0</strong>
+    Знайдено
+  </div>
+  <div class="stat">
+    <strong id="addedCount">0</strong>
+    Додано
+  </div>
+  <div class="stat">
+    <strong id="totalCount">0</strong>
+    Разом
+  </div>
+</div>
+
+<div id="confirmBox">
+  <h3>Номер не знайдено</h3>
+  <div id="confirmCode"></div>
+  <p>Додати цей номер у Google Таблицю?</p>
+
+  <button class="red" onclick="confirmAdd()">
+    Додати
+  </button>
+
+  <button class="gray" onclick="cancelAdd()">
+    Скасувати
+  </button>
+</div>
 
 <div class="manual">
   <input id="manualCode"
-         type="text"
-         placeholder="Інвентарний номер вручну">
-  <button onclick="sendManual()">
+         placeholder="Ввести номер вручну">
+
+  <button onclick="manualScan()">
     Перевірити номер
   </button>
 </div>
+
+<h3>Історія сканування</h3>
+<div id="history"></div>
 
 <script>
 'use strict';
@@ -160,33 +247,43 @@ const SCRIPT_URL =
 
 const video=document.getElementById('camera');
 const resultBox=document.getElementById('result');
-const cameraInfo=document.getElementById('cameraInfo');
 const details=document.getElementById('details');
-const startButton=document.getElementById('startButton');
 
 let stream=null;
 let detector=null;
 let reader=null;
+
 let scanning=false;
-let sending=false;
+let busy=false;
+let awaitingConfirmation=false;
+
 let token=0;
 let timer=null;
-let startedAt=0;
 let frameCount=0;
+let startedAt=0;
 
 let candidate='';
 let candidateCount=0;
 let candidateTime=0;
-let candidateFrame=-1;
 
-let lastScanMode='';
+let lastHandled='';
+let lastSeenAt=0;
+
+let pendingBarcode='';
+let requestScript=null;
+let requestTimer=null;
+let requestResolve=null;
+let requestReject=null;
+
+let foundCount=0;
+let addedCount=0;
 
 const canvas=document.createElement('canvas');
 const ctx=canvas.getContext('2d',{
   willReadFrequently:true
 });
 
-function showResult(text,color='#e5e7eb'){
+function show(text,color='#e5e7eb'){
   resultBox.textContent=text;
   resultBox.style.background=color;
 }
@@ -197,115 +294,102 @@ function validCode(code){
     code.trim().length<=150;
 }
 
-function showPreviousResult(){
-  const p=new URLSearchParams(location.search);
-  const status=p.get('status');
-  const code=p.get('barcode');
-  const row=p.get('row');
+function updateStats(){
+  document.getElementById('foundCount')
+    .textContent=foundCount;
 
-  if(!status)return;
+  document.getElementById('addedCount')
+    .textContent=addedCount;
 
-  if(status==='found'){
-    showResult(
-      'Знайдено: '+code+'. Позначено зеленим.',
-      '#b7e1cd'
-    );
-  }else if(status==='added'){
-    showResult('Додано: '+code,'#fff3cd');
-  }else if(status==='cancelled'){
-    showResult('Додавання скасовано');
-  }
-
-  if(row){
-    details.textContent='Рядок таблиці: '+row;
-  }
-
-  history.replaceState(
-    {},'',location.pathname+'?v=111'
-  );
+  document.getElementById('totalCount')
+    .textContent=foundCount+addedCount;
 }
 
-async function openCamera(){
-  const modes=[
-    {
-      facingMode:{ideal:'environment'},
-      width:{ideal:1920},
-      height:{ideal:1080}
-    },
-    {
-      facingMode:{ideal:'environment'},
-      width:{ideal:1280},
-      height:{ideal:720}
-    },
-    {facingMode:{ideal:'environment'}},
-    true
-  ];
+function addHistory(code,status,message){
+  const item=document.createElement('div');
 
-  let lastError;
+  item.className='history-item '+status;
 
-  for(let i=0;i<modes.length;i++){
-    try{
-      details.textContent=
-        'Запуск камери: режим '+(i+1);
+  const time=new Date().toLocaleTimeString('uk-UA');
 
-      return await navigator.mediaDevices.getUserMedia({
-        audio:false,
-        video:modes[i]
-      });
-    }catch(e){
-      lastError=e;
+  item.textContent=
+    time+' | '+code+' | '+message;
 
-      if(e.name==='NotAllowedError' ||
-         e.name==='SecurityError'){
-        throw e;
-      }
-    }
+  const list=document.getElementById('history');
+  list.prepend(item);
+
+  while(list.children.length>20){
+    list.lastElementChild.remove();
   }
-
-  throw lastError ||
-    new Error('Камера недоступна');
 }
 
-async function configureCamera(track){
-  try{
-    const caps=track.getCapabilities
-      ?track.getCapabilities():{};
-
-    if(caps.focusMode?.includes('continuous')){
-      try{
-        await track.applyConstraints({
-          advanced:[{focusMode:'continuous'}]
-        });
-      }catch(e){}
+// Передавання запиту без переходу між сайтами.
+function apiRequest(action,barcode){
+  return new Promise((resolve,reject)=>{
+    if(requestScript){
+      reject(new Error('Попередній запит ще триває'));
+      return;
     }
 
-    if(caps.zoom &&
-       Number.isFinite(caps.zoom.min) &&
-       Number.isFinite(caps.zoom.max)){
-      const zoom=Math.max(
-        caps.zoom.min,
-        Math.min(1,caps.zoom.max)
+    const script=document.createElement('script');
+
+    const url=new URL(SCRIPT_URL);
+    url.searchParams.set('action',action);
+    url.searchParams.set('barcode',barcode);
+    url.searchParams.set('callback','inventoryCallback');
+    url.searchParams.set('_',Date.now().toString());
+
+    requestScript=script;
+    requestResolve=resolve;
+    requestReject=reject;
+
+    script.src=url.toString();
+    script.async=true;
+
+    script.onerror=()=>{
+      finishRequest(
+        new Error('Помилка зв’язку з Google Apps Script')
       );
+    };
 
-      try{
-        await track.applyConstraints({
-          advanced:[{zoom}]
-        });
-      }catch(e){}
-    }
+    requestTimer=setTimeout(()=>{
+      finishRequest(
+        new Error('Час очікування відповіді минув')
+      );
+    },15000);
 
-    const s=track.getSettings();
+    document.head.appendChild(script);
+  });
+}
 
-    cameraInfo.textContent=
-      'Відео: '+(s.width||video.videoWidth)+
-      '×'+(s.height||video.videoHeight)+
-      ' | Zoom: '+(s.zoom??'авто')+
-      ' | Фокус: '+(s.focusMode||'авто');
-  }catch(e){
-    cameraInfo.textContent=
-      'Камера: стандартні параметри';
+function finishRequest(error,data){
+  const resolve=requestResolve;
+  const reject=requestReject;
+
+  requestResolve=null;
+  requestReject=null;
+
+  if(requestTimer){
+    clearTimeout(requestTimer);
+    requestTimer=null;
+  }
+
+  if(requestScript){
+    requestScript.remove();
+    requestScript=null;
+  }
+
+  if(error){
+    if(reject)reject(error);
+  }else{
+    if(resolve)resolve(data);
   }
 }
+
+// Цю функцію викликає відповідь Google Apps Script.
+window.inventoryCallback=function(data){
+  finishRequest(null,data);
+};
 
 async function setupDecoders(){
   detector=null;
@@ -342,10 +426,134 @@ async function setupDecoders(){
   }
 
   if(!detector&&!reader){
-    throw new Error(
-      'Механізм розпізнавання недоступний'
-    );
+    throw new Error('Розпізнавач недоступний');
   }
+}
+
+async function openCamera(){
+  const modes=[
+    {
+      facingMode:{ideal:'environment'},
+      width:{ideal:1920},
+      height:{ideal:1080}
+    },
+    {
+      facingMode:{ideal:'environment'},
+      width:{ideal:1280},
+      height:{ideal:720}
+    },
+    {facingMode:{ideal:'environment'}},
+    true
+  ];
+
+  let error;
+
+  for(const mode of modes){
+    try{
+      return await navigator.mediaDevices.getUserMedia({
+        video:mode,
+        audio:false
+      });
+    }catch(e){
+      error=e;
+
+      if(e.name==='NotAllowedError' ||
+         e.name==='SecurityError'){
+        throw e;
+      }
+    }
+  }
+
+  throw error||new Error('Камера недоступна');
+}
+
+async function configureCamera(track){
+  try{
+    const caps=track.getCapabilities
+      ?track.getCapabilities():{};
+
+    if(caps.focusMode?.includes('continuous')){
+      try{
+        await track.applyConstraints({
+          advanced:[{focusMode:'continuous'}]
+        });
+      }catch(e){}
+    }
+
+    if(caps.zoom &&
+       Number.isFinite(caps.zoom.min) &&
+       Number.isFinite(caps.zoom.max)){
+      const zoom=Math.max(
+        caps.zoom.min,
+        Math.min(1,caps.zoom.max)
+      );
+
+      try{
+        await track.applyConstraints({
+          advanced:[{zoom}]
+        });
+      }catch(e){}
+    }
+  }catch(e){}
+}
+
+async function startScanner(){
+  if(scanning)return;
+
+  const current=++token;
+
+  scanning=true;
+  busy=false;
+  awaitingConfirmation=false;
+
+  document.getElementById('startBtn').disabled=true;
+
+  try{
+    show('Запуск камери...');
+
+    const opened=await openCamera();
+
+    if(!scanning||current!==token){
+      opened.getTracks().forEach(t=>t.stop());
+      return;
+    }
+
+    stream=opened;
+    video.srcObject=stream;
+    await video.play();
+
+    if(!scanning||current!==token)return;
+
+    await configureCamera(stream.getVideoTracks()[0]);
+    await setupDecoders();
+
+    if(!scanning||current!==token)return;
+
+    frameCount=0;
+    startedAt=performance.now();
+
+    candidate='';
+    candidateCount=0;
+    lastHandled='';
+    lastSeenAt=0;
+
+    show('Наведіть штрихкод у рамку');
+    details.textContent='Камера працює безперервно';
+
+    schedule(current,0);
+
+  }catch(e){
+    stopScanner();
+    show('Помилка: '+e.message,'#f4cccc');
+  }
+}
+
+function schedule(current,delay=40){
+  if(!scanning||current!==token)return;
+
+  timer=setTimeout(()=>{
+    scanFrame(current);
+  },delay);
 }
 
 function drawRegion(mode){
@@ -354,29 +562,21 @@ function drawRegion(mode){
 
   if(!w||!h)return false;
 
-  let sx,sy,sw,sh;
+  const wide=mode==='wide';
 
-  if(mode==='fast'){
-    sx=Math.floor(w*.05);
-    sy=Math.floor(h*.38);
-    sw=Math.floor(w*.90);
-    sh=Math.floor(h*.24);
-  }else{
-    sx=Math.floor(w*.02);
-    sy=Math.floor(h*.25);
-    sw=Math.floor(w*.96);
-    sh=Math.floor(h*.50);
-  }
+  const sx=Math.floor(w*(wide?.02:.05));
+  const sy=Math.floor(h*(wide?.25:.38));
+  const sw=Math.floor(w*(wide?.96:.90));
+  const sh=Math.floor(h*(wide?.50:.24));
 
-  const maxWidth=mode==='fast'?1280:1600;
+  const maxWidth=wide?1600:1280;
   const scale=Math.min(1,maxWidth/sw);
 
   canvas.width=Math.max(1,Math.round(sw*scale));
   canvas.height=Math.max(1,Math.round(sh*scale));
 
   ctx.drawImage(
-    video,
-    sx,sy,sw,sh,
+    video,sx,sy,sw,sh,
     0,0,canvas.width,canvas.height
   );
 
@@ -388,9 +588,7 @@ function decodeZXing(){
 
   try{
     const source=
-      new ZXing.HTMLCanvasElementLuminanceSource(
-        canvas
-      );
+      new ZXing.HTMLCanvasElementLuminanceSource(canvas);
 
     const bitmap=new ZXing.BinaryBitmap(
       new ZXing.HybridBinarizer(source)
@@ -408,157 +606,16 @@ function decodeZXing(){
   }
 }
 
-function enhanceContrast(){
-  const img=ctx.getImageData(
-    0,0,canvas.width,canvas.height
-  );
+async function scanFrame(current){
+  if(!scanning||current!==token)return;
 
-  const data=img.data;
-  let min=255,max=0;
-
-  for(let i=0;i<data.length;i+=4){
-    const g=.299*data[i]+
-      .587*data[i+1]+
-      .114*data[i+2];
-
-    min=Math.min(min,g);
-    max=Math.max(max,g);
-  }
-
-  const range=Math.max(1,max-min);
-
-  for(let i=0;i<data.length;i+=4){
-    const g=.299*data[i]+
-      .587*data[i+1]+
-      .114*data[i+2];
-
-    let v=((g-min)/range)*255;
-    v=(v-127.5)*1.5+127.5;
-    v=Math.max(0,Math.min(255,v));
-
-    data[i]=data[i+1]=data[i+2]=v;
-  }
-
-  ctx.putImageData(img,0,0);
-}
-
-async function startScanner(){
-  if(scanning||sending)return;
-
-  if(!navigator.mediaDevices?.getUserMedia){
-    showResult(
-      'Камера недоступна',
-      '#f4cccc'
-    );
+  if(busy||awaitingConfirmation){
+    schedule(current,100);
     return;
   }
 
-  const current=++token;
-
-  scanning=true;
-  startButton.disabled=true;
-
-  try{
-    showResult('Запускаємо камеру...');
-
-    const opened=await openCamera();
-
-    if(!scanning||current!==token){
-      opened.getTracks().forEach(t=>t.stop());
-      return;
-    }
-
-    stream=opened;
-    video.srcObject=stream;
-    await video.play();
-
-    if(!scanning||current!==token)return;
-
-    await configureCamera(
-      stream.getVideoTracks()[0]
-    );
-
-    await setupDecoders();
-
-    if(!scanning||current!==token)return;
-
-    startedAt=performance.now();
-    frameCount=0;
-
-    candidate='';
-    candidateCount=0;
-    candidateTime=0;
-    candidateFrame=-1;
-
-    showResult('Наведіть штрихкод у рамку');
-
-    details.textContent=detector
-      ?'Режим: BarcodeDetector + ZXing'
-      :'Режим: ZXing';
-
-    schedule(current,0);
-
-  }catch(e){
-    if(current!==token)return;
-
-    stopScanner(false);
-
-    showResult(
-      'Помилка: '+e.message,
-      '#f4cccc'
-    );
-  }
-}
-
-function schedule(current,delay=40){
-  if(!scanning||current!==token)return;
-
-  timer=setTimeout(()=>{
-    scanFrame(current);
-  },delay);
-}
-
-function registerCandidate(code,mode){
-  const now=performance.now();
-
-  if(candidate===code &&
-     now-candidateTime<2000 &&
-     candidateFrame!==frameCount){
-    candidateCount++;
-  }else{
-    candidate=code;
-    candidateCount=1;
-  }
-
-  candidateTime=now;
-  candidateFrame=frameCount;
-
-  if(candidateCount>=2){
-    lastScanMode=mode;
-
-    const seconds=(
-      (now-startedAt)/1000
-    ).toFixed(2);
-
-    details.textContent=
-      'Підтверджено за '+seconds+
-      ' с | '+lastScanMode;
-
-    sendBarcode(code);
-  }else{
-    showResult(
-      'Зчитано: '+code+
-      '. Перевіряємо повторно...',
-      '#fff3cd'
-    );
-  }
-}
-
-async function scanFrame(current){
-  if(!scanning||
-     sending||
-     current!==token||
-     video.readyState<2){
+  if(video.readyState<2){
+    schedule(current,100);
     return;
   }
 
@@ -571,10 +628,11 @@ async function scanFrame(current){
       frameCount%3===0
       ?'wide':'fast';
 
-    if(!drawRegion(mode))return;
+    if(!drawRegion(mode)){
+      return;
+    }
 
     let code='';
-    let scanMode='';
 
     if(detector){
       try{
@@ -588,31 +646,56 @@ async function scanFrame(current){
 
         if(item){
           code=String(item.rawValue||'').trim();
-          scanMode='BarcodeDetector';
         }
       }catch(e){}
     }
 
-    const useZXing=
-      !detector ||
-      (elapsed>1200 && frameCount%3===0);
-
-    if(!code&&reader&&useZXing){
+    if(!code&&reader&&(
+      !detector||
+      (elapsed>1200&&frameCount%3===0)
+    )){
       code=decodeZXing();
-      if(code)scanMode='ZXing';
     }
 
-    if(!code&&reader&&elapsed>2500 &&
-       frameCount%10===0){
-      drawRegion('wide');
-      enhanceContrast();
-      code=decodeZXing();
-
-      if(code)scanMode='ZXing + контраст';
-    }
+    const now=performance.now();
 
     if(validCode(code)){
-      registerCandidate(code,scanMode);
+      lastSeenAt=now;
+
+      if(code===lastHandled){
+        candidate='';
+        candidateCount=0;
+        return;
+      }
+
+      if(code===candidate&&
+         now-candidateTime<2000){
+        candidateCount++;
+      }else{
+        candidate=code;
+        candidateCount=1;
+      }
+
+      candidateTime=now;
+
+      if(candidateCount>=2){
+        candidate='';
+        candidateCount=0;
+        lastHandled=code;
+
+        busy=true;
+        processBarcode(code);
+      }
+
+    }else{
+      candidate='';
+      candidateCount=0;
+
+      // Після того як штрихкод зник із кадру,
+      // дозволяємо знову зчитати той самий номер.
+      if(now-lastSeenAt>1500){
+        lastHandled='';
+      }
     }
 
   }catch(e){
@@ -624,47 +707,175 @@ async function scanFrame(current){
   }
 }
 
-function sendBarcode(code){
-  code=String(code||'').trim();
+async function processBarcode(code){
+  const started=performance.now();
 
-  if(!validCode(code)||sending)return;
+  show('Перевіряємо: '+code,'#fff3cd');
 
-  sending=true;
-  stopScanner(false);
+  try{
+    const data=await apiRequest('scan',code);
 
-  if(navigator.vibrate){
-    navigator.vibrate(100);
-  }
+    if(!scanning)return;
 
-  showResult(
-    'Підтверджено: '+code+'. Передаємо...',
-    '#b7e1cd'
-  );
+    const seconds=(
+      (performance.now()-started)/1000
+    ).toFixed(1);
 
-  const url=SCRIPT_URL+
-    '?action=scan&barcode='+
-    encodeURIComponent(code);
+    if(data.status==='found'){
+      foundCount++;
+      updateStats();
 
-  window.location.assign(url);
-}
+      show(
+        'ЗНАЙДЕНО: '+code,
+        '#b7e1cd'
+      );
 
-function sendManual(){
-  const code=document
-    .getElementById('manualCode')
-    .value.trim();
+      details.textContent=
+        'Рядок '+data.row+
+        ' | Запит: '+seconds+' с';
 
-  if(!validCode(code)){
-    showResult(
-      'Введіть коректний номер',
+      addHistory(code,'found','Знайдено');
+
+      if(navigator.vibrate){
+        navigator.vibrate(80);
+      }
+
+    }else if(data.status==='not_found'){
+      awaitingConfirmation=true;
+      pendingBarcode=code;
+
+      document.getElementById('confirmCode')
+        .textContent=code;
+
+      document.getElementById('confirmBox')
+        .style.display='block';
+
+      show(
+        'НЕ ЗНАЙДЕНО: '+code,
+        '#fff0c2'
+      );
+
+      details.textContent=
+        'Потрібне підтвердження додавання';
+
+    }else{
+      throw new Error(
+        data.message||'Невідома відповідь сервера'
+      );
+    }
+
+  }catch(e){
+    show(
+      'Помилка: '+e.message,
       '#f4cccc'
     );
+
+    addHistory(code,'error',e.message);
+
+    // Після помилки повторне сканування дозволено
+    // лише після відведення камери від штрихкоду.
+  }finally{
+    busy=false;
+  }
+}
+
+async function confirmAdd(){
+  if(!awaitingConfirmation||busy)return;
+
+  const code=pendingBarcode;
+  busy=true;
+
+  show('Додаємо номер: '+code,'#fff3cd');
+
+  try{
+    const data=await apiRequest('add',code);
+
+    if(data.status==='added'){
+      addedCount++;
+      updateStats();
+
+      show(
+        'ДОДАНО: '+code,
+        '#fff0c2'
+      );
+
+      details.textContent=
+        'Новий номер у рядку '+data.row;
+
+      addHistory(code,'added','Додано');
+
+    }else if(data.status==='found'){
+      foundCount++;
+      updateStats();
+
+      show(
+        'ЗНАЙДЕНО: '+code,
+        '#b7e1cd'
+      );
+
+      addHistory(code,'found','Знайдено');
+
+    }else{
+      throw new Error(
+        data.message||'Не вдалося додати номер'
+      );
+    }
+
+    closeConfirmation();
+
+  }catch(e){
+    show(
+      'Помилка додавання: '+e.message,
+      '#f4cccc'
+    );
+    // Залишаємо підтвердження відкритим,
+    // щоб користувач міг повторити запит.
+  }finally{
+    busy=false;
+  }
+}
+
+function closeConfirmation(){
+  awaitingConfirmation=false;
+  pendingBarcode='';
+
+  document.getElementById('confirmBox')
+    .style.display='none';
+}
+
+function cancelAdd(){
+  if(busy)return;
+
+  const code=pendingBarcode;
+  closeConfirmation();
+
+  show(
+    'Додавання скасовано: '+code,
+    '#e5e7eb'
+  );
+
+  addHistory(code,'error','Скасовано');
+}
+
+function manualScan(){
+  if(busy||awaitingConfirmation)return;
+
+  const input=document.getElementById('manualCode');
+  const code=input.value.trim();
+
+  if(!validCode(code)){
+    show('Введіть інвентарний номер','#f4cccc');
     return;
   }
 
-  sendBarcode(code);
+  lastHandled=code;
+  busy=true;
+  input.value='';
+
+  processBarcode(code);
 }
 
-function stopScanner(showMessage=true){
+function stopScanner(){
   scanning=false;
   token++;
 
@@ -681,19 +892,20 @@ function stopScanner(showMessage=true){
   video.srcObject=null;
   detector=null;
   reader=null;
-  startButton.disabled=false;
 
-  if(showMessage){
-    sending=false;
-    showResult('Сканування зупинено');
+  document.getElementById('startBtn')
+    .disabled=false;
+
+  if(!busy&&!awaitingConfirmation){
+    show('Сканування зупинено');
   }
 }
 
 window.addEventListener('pagehide',()=>{
-  stopScanner(false);
+  stopScanner();
 });
 
-showPreviousResult();
+updateStats();
 </script>
 </body>
 </html>
