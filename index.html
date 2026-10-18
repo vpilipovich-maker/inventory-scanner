@@ -15,6 +15,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 15px;
+      background: #f5f6f8;
     }
 
     button {
@@ -24,7 +25,7 @@
       color: white;
       border: 0;
       border-radius: 10px;
-      cursor: pointer;
+      margin: 5px;
     }
 
     video {
@@ -37,8 +38,11 @@
 
     #result {
       margin-top: 20px;
-      font-size: 24px;
+      padding: 15px;
+      font-size: 20px;
       font-weight: bold;
+      border-radius: 10px;
+      background: #e5e7eb;
       overflow-wrap: anywhere;
     }
   </style>
@@ -47,10 +51,14 @@
 <body>
 
   <h2>Інвентаризація обладнання</h2>
-  <p>Автоматичне сканування штрихкодів — тест</p>
+  <p>Швидке сканування Code 128</p>
 
   <button id="startButton" onclick="startScanner()">
     Почати сканування
+  </button>
+
+  <button onclick="stopScanner()">
+    Зупинити камеру
   </button>
 
   <video id="camera" autoplay playsinline muted></video>
@@ -61,53 +69,111 @@
     const SCRIPT_URL =
       'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
 
-    const TEST_BARCODE = '11137000039';
-
     let reader = null;
     let sending = false;
+    let scanning = false;
+
+    const resultBox = document.getElementById('result');
+
+    function showResult(message, color = '#e5e7eb') {
+      resultBox.textContent = message;
+      resultBox.style.background = color;
+    }
 
     async function startScanner() {
-      const resultBox = document.getElementById('result');
+      if (scanning) return;
 
       try {
         if (!window.ZXing) {
-          throw new Error(
-            'Бібліотека ZXing не завантажилася'
-          );
+          throw new Error('Бібліотека ZXing не завантажена');
         }
 
-        if (reader) {
-          reader.reset();
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Браузер не підтримує камеру');
         }
 
-        reader = new ZXing.BrowserMultiFormatReader();
+        scanning = true;
         sending = false;
 
-        resultBox.textContent =
-          'Наведіть камеру на штрихкод';
+        document.getElementById('startButton').disabled = true;
+
+        showResult('Запускаємо задню камеру...');
+
+        // Обмежуємо розпізнавання тільки Code 128
+        const hints = new Map();
+        hints.set(
+          ZXing.DecodeHintType.POSSIBLE_FORMATS,
+          [ZXing.BarcodeFormat.CODE_128]
+        );
+        hints.set(
+          ZXing.DecodeHintType.TRY_HARDER,
+          true
+        );
+
+        reader = new ZXing.BrowserMultiFormatReader(
+          hints,
+          100
+        );
+
+        // Просимо Full HD і задню камеру
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          }
+        });
+
+        const videoTrack = stream.getVideoTracks()[0];
+
+        // Автофокус, якщо підтримується
+        try {
+          const capabilities = videoTrack.getCapabilities();
+
+          if (capabilities.focusMode &&
+              capabilities.focusMode.includes('continuous')) {
+            await videoTrack.applyConstraints({
+              advanced: [{ focusMode: 'continuous' }]
+            });
+          }
+        } catch (e) {
+          console.log('Автофокус за замовчуванням');
+        }
+
+        // Отримуємо ID вибраної камери
+        const settings = videoTrack.getSettings();
+        const deviceId = settings.deviceId;
+
+        // Звільняємо попередній потік
+        stream.getTracks().forEach(track => track.stop());
+
+        if (!scanning) return;
+
+        showResult('Наведіть камеру на штрихкод');
 
         await reader.decodeFromVideoDevice(
-          undefined,
+          deviceId || undefined,
           'camera',
           (result, error) => {
-            if (!result || sending) return;
+            if (!result || sending || !scanning) return;
 
             const code = result.getText().trim();
 
-            if (code !== TEST_BARCODE) {
-              resultBox.textContent =
-                'Тест: очікується номер ' + TEST_BARCODE;
-              return;
-            }
+            if (!code) return;
 
             sending = true;
+            scanning = false;
 
-            resultBox.textContent =
-              'Зчитано: ' + code +
-              '. Передавання в таблицю...';
+            showResult(
+              'Зчитано: ' + code + '. Передаємо в таблицю...',
+              '#fff3cd'
+            );
 
             if (navigator.vibrate) {
-              navigator.vibrate(150);
+              navigator.vibrate(120);
             }
 
             reader.reset();
@@ -122,11 +188,30 @@
         );
 
       } catch (error) {
-        resultBox.textContent =
-          'Помилка: ' +
-          error.name + ' — ' + error.message;
+        stopScanner();
+        showResult(
+          'Помилка: ' + error.message,
+          '#f4cccc'
+        );
       }
     }
+
+    function stopScanner() {
+      scanning = false;
+      sending = false;
+
+      if (reader) {
+        reader.reset();
+        reader = null;
+      }
+
+      document.getElementById('startButton').disabled = false;
+      showResult('Камеру зупинено');
+    }
+
+    window.addEventListener('pagehide', function() {
+      if (reader) reader.reset();
+    });
   </script>
 
 </body>
