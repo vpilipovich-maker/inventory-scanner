@@ -3,345 +3,345 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Держмитслужба — Інвентаризація V12.6.1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Держмитслужба — Інвентаризація 2026 V12.6.2</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <style>
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  padding:12px;
-  font-family:Arial,sans-serif;
-  text-align:center;
-  background:#f5f6f8;
-  color:#222;
+* {
+  box-sizing: border-box;
 }
 
-h2{margin:8px 0}
-h3{margin:10px 0}
-p{color:#555}
-
-button{
-  border:0;
-  border-radius:9px;
-  padding:12px 15px;
-  margin:4px;
-  font-size:16px;
-  color:white;
-  background:#1769aa;
-  cursor:pointer;
+body {
+  margin: 0;
+  padding: 12px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f5f6f8;
+  color: #222;
 }
 
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
+h2 { margin: 8px 0; }
+h3 { margin: 10px 0; }
+p { color: #555; }
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 15px;
+  margin: 4px;
+  font-size: 16px;
+  color: white;
+  background: #1769aa;
+  cursor: pointer;
 }
 
-.gray{background:#666}
-.red{background:#b3261e}
-.green{background:#188038}
-
-.orange{
-  background:#e67e00;
-  color:#fff;
-  font-weight:bold;
-  opacity:1;
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
-.camera-box{
-  position:relative;
-  max-width:550px;
-  margin:12px auto;
-  background:#000;
-  border-radius:12px;
-  overflow:hidden;
+.gray { background: #666; }
+.red { background: #b3261e; }
+.green { background: #188038; }
+
+.orange {
+  background: #e67e00;
+  color: #fff;
+  font-weight: bold;
 }
 
-video{
-  display:block;
-  width:100%;
-  height:auto;
+.camera-box {
+  position: relative;
+  max-width: 550px;
+  margin: 12px auto;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.scan-area{
-  position:absolute;
-  left:12%;
-  top:40%;
-  width:76%;
-  height:20%;
-  border:2px solid #00ff88;
-  border-radius:8px;
-  pointer-events:none;
+video {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
-.scan-line{
-  position:absolute;
-  left:15%;
-  top:50%;
-  width:70%;
-  border-top:2px solid #00ff88;
-  pointer-events:none;
+.scan-area {
+  position: absolute;
+  left: 12%;
+  top: 40%;
+  width: 76%;
+  height: 20%;
+  border: 2px solid #00ff88;
+  border-radius: 8px;
+  pointer-events: none;
 }
 
-.hint{
-  max-width:550px;
-  margin:10px auto;
-  padding:10px;
-  border-radius:9px;
-  background:#e8f2ff;
-  color:#17578c;
+.scan-line {
+  position: absolute;
+  left: 15%;
+  top: 50%;
+  width: 70%;
+  border-top: 2px solid #00ff88;
+  pointer-events: none;
 }
 
-#result{
-  max-width:550px;
-  margin:12px auto;
-  padding:15px;
-  border-radius:10px;
-  background:#e5e7eb;
-  font-size:18px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
+.hint {
+  max-width: 550px;
+  margin: 10px auto;
+  padding: 10px;
+  border-radius: 9px;
+  background: #e8f2ff;
+  color: #17578c;
 }
 
-#details{
-  font-size:13px;
-  color:#555;
-  margin:8px auto;
+#result {
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 15px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  font-size: 18px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
 }
 
-.stats{
-  display:flex;
-  gap:8px;
-  max-width:550px;
-  margin:12px auto;
+#details {
+  font-size: 13px;
+  color: #555;
+  margin: 8px auto;
 }
 
-.stat{
-  flex:1;
-  padding:12px 5px;
-  background:white;
-  border-radius:9px;
-  border:1px solid #ddd;
+.stats {
+  display: flex;
+  gap: 8px;
+  max-width: 550px;
+  margin: 12px auto;
 }
 
-.stat strong{
-  display:block;
-  font-size:25px;
+.stat {
+  flex: 1;
+  padding: 12px 5px;
+  background: white;
+  border-radius: 9px;
+  border: 1px solid #ddd;
 }
 
-.manual{
-  max-width:550px;
-  margin:15px auto;
+.stat strong {
+  display: block;
+  font-size: 25px;
 }
 
-.manual input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
+.manual {
+  max-width: 550px;
+  margin: 15px auto;
 }
 
-#confirmBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:#fff1cc;
-  border:1px solid #e1bd62;
-  border-radius:10px;
+.manual input {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  border: 1px solid #aaa;
+  border-radius: 9px;
 }
 
-#confirmCode{
-  font-size:24px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
+#confirmBox {
+  display: none;
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 16px;
+  background: #fff1cc;
+  border: 1px solid #e1bd62;
+  border-radius: 10px;
 }
 
-#history{
-  max-width:550px;
-  margin:15px auto;
-  text-align:left;
+#confirmCode {
+  font-size: 24px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
 }
 
-.history-item{
-  background:white;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border-left:5px solid #aaa;
-  overflow-wrap:anywhere;
+#history {
+  max-width: 550px;
+  margin: 15px auto;
+  text-align: left;
 }
 
-.history-item.found{border-color:#188038}
-.history-item.added{border-color:#c68100}
-.history-item.error{border-color:#c62828}
-
-.sound-controls{
-  max-width:550px;
-  margin:8px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  flex-wrap:wrap;
+.history-item {
+  background: white;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border-left: 5px solid #aaa;
+  overflow-wrap: anywhere;
 }
 
-.sound-controls label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:16px;
+.history-item.found { border-color: #188038; }
+.history-item.added { border-color: #c68100; }
+.history-item.error { border-color: #c62828; }
+
+.sound-controls {
+  max-width: 550px;
+  margin: 8px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.sound-controls input{
-  width:19px;
-  height:19px;
+.sound-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
 }
 
-.location-box{
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:white;
-  border:1px solid #ccd4dc;
-  border-radius:12px;
-  text-align:left;
+.sound-controls input {
+  width: 19px;
+  height: 19px;
 }
 
-.location-box label{
-  display:block;
-  margin:10px 0 5px;
-  font-weight:bold;
+.location-box {
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 16px;
+  background: white;
+  border: 1px solid #ccd4dc;
+  border-radius: 12px;
+  text-align: left;
 }
 
-.location-box input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
+.location-box label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: bold;
 }
 
-.location-box button{
-  width:100%;
-  margin:14px 0 0;
+.location-box input {
+  width: 100%;
+  padding: 12px;
+  font-size: 18px;
+  border: 1px solid #aaa;
+  border-radius: 9px;
 }
 
-#locationForm{display:none}
-
-#activeLocation{
-  max-width:550px;
-  margin:10px auto;
-  padding:12px;
-  background:#dff2e4;
-  border-radius:9px;
-  font-weight:bold;
-  display:none;
+.location-box button {
+  width: 100%;
+  margin: 14px 0 0;
 }
 
-/* Загальна статистика */
+#locationForm { display: none; }
 
-.global-stats{
-  max-width:550px;
-  margin:12px auto;
-  padding:14px;
-  background:white;
-  border:1px solid #ccd4dc;
-  border-radius:12px;
+#activeLocation {
+  max-width: 550px;
+  margin: 10px auto;
+  padding: 12px;
+  background: #dff2e4;
+  border-radius: 9px;
+  font-weight: bold;
+  display: none;
 }
 
-.global-stats h3{
-  margin:0 0 10px;
+/* Загальний прогрес */
+
+.global-stats {
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 14px;
+  background: white;
+  border: 1px solid #ccd4dc;
+  border-radius: 12px;
 }
 
-.global-grid{
-  display:flex;
-  gap:8px;
+.global-stats h3 {
+  margin: 0 0 10px;
 }
 
-.global-cell{
-  flex:1;
-  min-width:0;
-  padding:10px 3px;
-  background:#f5f6f8;
-  border-radius:8px;
-  font-size:12px;
+.global-grid {
+  display: flex;
+  gap: 8px;
 }
 
-.global-cell strong{
-  display:block;
-  font-size:24px;
+.global-cell {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 3px;
+  background: #f5f6f8;
+  border-radius: 8px;
+  font-size: 12px;
 }
 
-.progress-track{
-  height:12px;
-  border-radius:10px;
-  background:#e5e7eb;
-  overflow:hidden;
-  margin-top:10px;
+.global-cell strong {
+  display: block;
+  font-size: 24px;
 }
 
-#globalProgress{
-  height:100%;
-  width:0;
-  background:#188038;
-  transition:width .3s;
+.progress-track {
+  height: 12px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  overflow: hidden;
+  margin-top: 10px;
 }
 
-#statsStatus{
-  font-size:12px;
-  color:#666;
-  margin-top:8px;
+#globalProgress {
+  height: 100%;
+  width: 0;
+  background: #188038;
+  transition: width .3s;
 }
 
-.label-count{
-  margin-top:12px;
-  padding:10px;
-  border-radius:8px;
-  background:#fff2cc;
-  font-size:15px;
+#statsStatus {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
 }
 
-/* Заміна наліпок */
-
-#labelBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:15px;
-  background:white;
-  border:1px solid #e1bd62;
-  border-radius:12px;
+.label-count {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fff2cc;
+  font-size: 15px;
 }
 
-#labelCode{
-  font-size:21px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-  margin:8px 0;
+/* Стан наліпки */
+
+#labelBox {
+  display: none;
+  max-width: 550px;
+  margin: 12px auto;
+  padding: 15px;
+  background: white;
+  border: 1px solid #e1bd62;
+  border-radius: 12px;
 }
 
-#labelState{
-  margin:10px 0;
-  font-weight:bold;
+#labelCode {
+  font-size: 21px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
 }
 
-#labelAction{
-  width:95%;
-  max-width:350px;
-  min-height:52px;
+#labelState {
+  margin: 10px 0;
+  font-weight: bold;
 }
 
-#labelMessage{
-  font-size:13px;
-  color:#555;
-  margin-top:8px;
+#labelAction {
+  width: 95%;
+  max-width: 350px;
+  min-height: 52px;
 }
 
+#labelMessage {
+  font-size: 13px;
+  color: #555;
+  margin-top: 8px;
+}
 </style>
 </head>
 
@@ -386,8 +386,8 @@ video{
 </div>
 
 <div class="hint">
-Перший звук — штрихкод зчитано.<br>
-Другий звук — перевірку в Google Таблиці завершено.
+  Перший звук — штрихкод зчитано.<br>
+  Другий звук — перевірку в Google Таблиці завершено.
 </div>
 
 <div class="sound-controls">
@@ -440,24 +440,18 @@ video{
 <div id="result">Очікування сканування...</div>
 <div id="details"></div>
 
-<!-- ЗАМІНА НАЛІПКИ -->
-
 <div id="labelBox">
   <h3>🏷️ Стан інвентарної наліпки</h3>
-
   <div id="labelCode"></div>
   <div id="labelState"></div>
 
-  <button id="labelAction"
-          class="orange"
+  <button id="labelAction" class="orange"
           onclick="toggleLabel()">
     Замінити наліпку
   </button>
 
   <div id="labelMessage"></div>
 </div>
-
-<!-- ЛІЧИЛЬНИКИ СЕАНСУ -->
 
 <div class="stats">
   <div class="stat">
@@ -476,13 +470,9 @@ video{
   </div>
 </div>
 
-<!-- ДОДАВАННЯ НОВОГО НОМЕРА -->
-
 <div id="confirmBox">
   <h3>Номер не знайдено</h3>
-
   <div id="confirmCode"></div>
-
   <p>Додати цей номер у Google Таблицю?</p>
 
   <button class="red" onclick="confirmAdd()">
@@ -493,8 +483,6 @@ video{
     Скасувати
   </button>
 </div>
-
-<!-- РУЧНЕ ВВЕДЕННЯ -->
 
 <div class="manual">
   <input id="manualCode"
@@ -543,22 +531,22 @@ let pendingBarcode = '';
 
 let sessionLocation = null;
 
-let requestScript = null;
-let requestTimer = null;
-let requestResolve = null;
-let requestReject = null;
-
 let foundCount = 0;
 let addedCount = 0;
 
 let audioContext = null;
 
-let statsBusy = false;
 let statsPending = false;
 
 let labelBarcode = '';
 let labelReplace = false;
 let labelBusy = false;
+
+// Черга запитів до Google Apps Script
+const requestQueue = [];
+let activeRequest = null;
+let requestSequence = 0;
+let pendingStatsPromise = null;
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d', {
@@ -568,14 +556,17 @@ const ctx = canvas.getContext('2d', {
 /* ЗВУК */
 
 function initSound(){
-  if(!$('soundEnabled').checked) return;
+  if(!$('soundEnabled').checked)return;
 
   try{
     if(!audioContext){
       const Audio =
-        window.AudioContext || window.webkitAudioContext;
+        window.AudioContext ||
+        window.webkitAudioContext;
 
-      if(!Audio) throw Error('Web Audio API недоступний');
+      if(!Audio){
+        throw Error('Web Audio API недоступний');
+      }
 
       audioContext = new Audio();
     }
@@ -585,14 +576,17 @@ function initSound(){
     }
 
   }catch(e){
-    details.textContent = 'Звук недоступний: ' + e.message;
+    details.textContent =
+      'Звук недоступний: ' + e.message;
   }
 }
 
 function tone(hz,duration,offset=0){
   if(!$('soundEnabled').checked ||
      !audioContext ||
-     audioContext.state !== 'running') return;
+     audioContext.state !== 'running'){
+    return;
+  }
 
   const t = audioContext.currentTime + offset;
 
@@ -617,11 +611,14 @@ function tone(hz,duration,offset=0){
 function sound(type){
   if(type === 'scanned'){
     tone(1450,.09);
+
   }else if(type === 'found'){
     tone(850,.17);
+
   }else if(type === 'not_found'){
     tone(550,.14);
     tone(550,.14,.22);
+
   }else if(type === 'error'){
     tone(320,.40);
   }
@@ -644,13 +641,14 @@ async function testSound(){
     await audioContext.resume();
     sound('scanned');
     setTimeout(()=>sound('found'),450);
+
   }catch(e){
     show('Браузер не дозволив звук','#f4cccc');
   }
 }
 
 $('soundEnabled').addEventListener('change',e=>{
-  if(e.target.checked) initSound();
+  if(e.target.checked)initSound();
 });
 
 /* ІНТЕРФЕЙС */
@@ -688,7 +686,7 @@ function addHistory(code,status,message){
   }
 }
 
-/* JSONP ЗАПИТИ */
+/* ЧЕРГА ЗАПИТІВ */
 
 function apiRequest(
   action,
@@ -696,112 +694,176 @@ function apiRequest(
   location=sessionLocation,
   extra={}
 ){
-  return new Promise((resolve,reject)=>{
-    if(requestScript){
-      reject(Error('Попередній запит ще триває'));
+  if(action === 'stats' && pendingStatsPromise){
+    return pendingStatsPromise;
+  }
+
+  const promise = new Promise((resolve,reject)=>{
+
+    if((action === 'scan' || action === 'add') &&
+       (!location?.building || !location?.room)){
+      reject(Error('Не вказано корпус або кабінет'));
       return;
     }
 
-    if(action === 'scan' || action === 'add'){
-      if(!location?.building || !location?.room){
-        reject(Error('Не вказано корпус або кабінет'));
-        return;
+    const job = {
+      id: ++requestSequence,
+      action,
+      barcode,
+      location,
+      extra,
+      resolve,
+      reject
+    };
+
+    if(action === 'stats'){
+      requestQueue.push(job);
+    }else{
+      // Записи користувача мають пріоритет
+      // перед статистикою, що очікує.
+      const index = requestQueue.findIndex(
+        item => item.action === 'stats'
+      );
+
+      if(index < 0){
+        requestQueue.push(job);
+      }else{
+        requestQueue.splice(index,0,job);
       }
     }
 
-    const script = document.createElement('script');
-    const url = new URL(SCRIPT_URL);
-
-    url.searchParams.set('action',action);
-
-    if(action !== 'stats'){
-      url.searchParams.set('barcode',barcode);
-    }
-
-    if(action === 'scan' || action === 'add'){
-      url.searchParams.set('building',location.building);
-      url.searchParams.set('room',location.room);
-    }
-
-    if(action === 'label'){
-      url.searchParams.set(
-        'replace',
-        extra.replace ? '1' : '0'
-      );
-    }
-
-    url.searchParams.set(
-      'callback',
-      'inventoryCallback'
-    );
-
-    url.searchParams.set(
-      '_',
-      Date.now().toString()
-    );
-
-    requestScript = script;
-    requestResolve = resolve;
-    requestReject = reject;
-
-    script.src = url.toString();
-    script.async = true;
-
-    script.onerror = ()=>{
-      finishRequest(
-        Error('Помилка зв’язку з Google Apps Script')
-      );
-    };
-
-    requestTimer = setTimeout(()=>{
-      finishRequest(
-        Error('Час очікування відповіді минув')
-      );
-    },15000);
-
-    document.head.appendChild(script);
+    processQueue();
   });
+
+  if(action === 'stats'){
+    pendingStatsPromise = promise;
+
+    promise.then(
+      ()=>{
+        if(pendingStatsPromise === promise){
+          pendingStatsPromise = null;
+        }
+      },
+      ()=>{
+        if(pendingStatsPromise === promise){
+          pendingStatsPromise = null;
+        }
+      }
+    );
+  }
+
+  return promise;
 }
 
-function finishRequest(error,data){
-  const resolve = requestResolve;
-  const reject = requestReject;
-
-  requestResolve = null;
-  requestReject = null;
-
-  if(requestTimer){
-    clearTimeout(requestTimer);
-    requestTimer = null;
+function processQueue(){
+  if(activeRequest || requestQueue.length === 0){
+    return;
   }
 
-  if(requestScript){
-    requestScript.remove();
-    requestScript = null;
+  const job = requestQueue.shift();
+  const script = document.createElement('script');
+  const url = new URL(SCRIPT_URL);
+
+  url.searchParams.set('action',job.action);
+
+  if(job.action !== 'stats'){
+    url.searchParams.set('barcode',job.barcode);
   }
+
+  if(job.action === 'scan' || job.action === 'add'){
+    url.searchParams.set(
+      'building',
+      job.location.building
+    );
+
+    url.searchParams.set(
+      'room',
+      job.location.room
+    );
+  }
+
+  if(job.action === 'label'){
+    url.searchParams.set(
+      'replace',
+      job.extra.replace ? '1' : '0'
+    );
+  }
+
+  url.searchParams.set(
+    'callback',
+    'inventoryCallback'
+  );
+
+  url.searchParams.set(
+    '_',
+    Date.now() + '-' + job.id
+  );
+
+  const current = {
+    job,
+    script,
+    timeout: null,
+    finished: false
+  };
+
+  activeRequest = current;
+
+  script.src = url.toString();
+  script.async = true;
+
+  script.onerror = ()=>{
+    finishActiveRequest(
+      Error('Помилка зв’язку з Google Apps Script')
+    );
+  };
+
+  current.timeout = setTimeout(()=>{
+    finishActiveRequest(
+      Error('Час очікування відповіді минув')
+    );
+  },15000);
+
+  document.head.appendChild(script);
+}
+
+function finishActiveRequest(error,data){
+  const current = activeRequest;
+
+  if(!current || current.finished){
+    return;
+  }
+
+  current.finished = true;
+
+  if(current.timeout){
+    clearTimeout(current.timeout);
+  }
+
+  current.script.onerror = null;
+  current.script.remove();
+
+  activeRequest = null;
 
   if(error){
-    if(reject) reject(error);
+    current.job.reject(error);
   }else{
-    if(resolve) resolve(data);
+    current.job.resolve(data);
   }
+
+  setTimeout(processQueue,0);
 }
 
 window.inventoryCallback = data=>{
-  finishRequest(null,data);
+  finishActiveRequest(null,data);
 };
 
 /* ЗАГАЛЬНА СТАТИСТИКА */
 
 async function refreshGlobalStats(){
-  if(statsBusy || requestScript || busy ||
-     labelBusy || awaitingConfirmation){
+  if(busy || labelBusy || awaitingConfirmation){
     statsPending = true;
     return;
   }
-
-  statsBusy = true;
-  statsPending = false;
 
   try{
     const data = await apiRequest('stats');
@@ -842,34 +904,26 @@ async function refreshGlobalStats(){
     $('statsStatus').textContent =
       'Статистика тимчасово недоступна: ' +
       e.message;
-  }finally{
-    statsBusy = false;
-
-    if(statsPending &&
-       !requestScript &&
-       !busy &&
-       !labelBusy &&
-       !awaitingConfirmation){
-      statsPending = false;
-      setTimeout(refreshGlobalStats,300);
-    }
   }
 }
 
 function requestStatsRefresh(){
   statsPending = true;
-
-  if(!statsBusy &&
-     !requestScript &&
-     !busy &&
-     !labelBusy &&
-     !awaitingConfirmation){
-    statsPending = false;
-    setTimeout(refreshGlobalStats,300);
-  }
+  setTimeout(runPendingStats,400);
 }
 
-/* ЗАМІНА НАЛІПКИ */
+function runPendingStats(){
+  if(!statsPending)return;
+
+  if(busy || labelBusy || awaitingConfirmation){
+    return;
+  }
+
+  statsPending = false;
+  refreshGlobalStats();
+}
+
+/* ЗАМІНА НАЛІПОК */
 
 function hideLabel(){
   labelBarcode = '';
@@ -916,31 +970,27 @@ function renderLabel(){
     button.className = 'orange';
   }
 
-  // Виправлено: кнопка активна після завершення
-  // операції збереження, незалежно від статистики.
   button.disabled = labelBusy;
 }
 
 async function toggleLabel(){
-  if(!labelBarcode || labelBusy) return;
+  if(!labelBarcode || labelBusy || busy ||
+     awaitingConfirmation){
+    return;
+  }
 
   const code = labelBarcode;
   const newValue = !labelReplace;
 
-  // Якщо триває статистика, не втрачаємо натискання:
-  // чекаємо звільнення каналу запитів.
-  if(requestScript || busy || awaitingConfirmation){
-    $('labelMessage').textContent =
-      'Триває попередній запит. Зачекайте та натисніть ще раз.';
-    return;
-  }
-
+  // Приймаємо натискання одразу.
+  // Черга сама дочекається завершення статистики.
   labelBusy = true;
   busy = true;
+
   renderLabel();
 
   $('labelMessage').textContent =
-    'Зберігаємо позначку…';
+    'Зберігаємо позначку в Google Таблиці…';
 
   try{
     const data = await apiRequest(
@@ -963,8 +1013,6 @@ async function toggleLabel(){
       $('labelMessage').textContent =
         '✓ ' + data.message +
         '. Збережено в Google Таблиці.';
-
-      renderLabel();
     }
 
     addHistory(
@@ -979,7 +1027,7 @@ async function toggleLabel(){
     $('labelMessage').textContent =
       'Помилка збереження: ' +
       e.message +
-      '. Перевірте стан у таблиці.';
+      '. Перевірте стан у таблиці перед повторною спробою.';
 
     sound('error');
 
@@ -988,11 +1036,7 @@ async function toggleLabel(){
     busy = false;
 
     renderLabel();
-
-    if(statsPending){
-      statsPending = false;
-      setTimeout(refreshGlobalStats,300);
-    }
+    runPendingStats();
   }
 }
 
@@ -1012,6 +1056,7 @@ async function setupDecoders(){
           formats:['code_128']
         });
       }
+
     }catch(e){}
   }
 
@@ -1063,6 +1108,7 @@ async function openCamera(){
         video:mode,
         audio:false
       });
+
     }catch(e){
       error = e;
 
@@ -1105,10 +1151,12 @@ async function configureCamera(track){
   }catch(e){}
 }
 
-/* ВИБІР МІСЦЯ */
+/* КОРПУС І КАБІНЕТ */
 
 function requestLocation(){
-  if(scanning || busy || awaitingConfirmation) return;
+  if(scanning || busy || awaitingConfirmation){
+    return;
+  }
 
   $('locationForm').style.display = 'block';
   $('startBtn').disabled = true;
@@ -1129,12 +1177,18 @@ function confirmLocation(){
   const room = $('roomInput').value.trim();
 
   if(!building || !room){
-    show('Заповніть корпус і кабінет','#f4cccc');
+    show(
+      'Заповніть корпус і кабінет',
+      '#f4cccc'
+    );
     return;
   }
 
   if(building.length > 100 || room.length > 100){
-    show('Занадто довге значення','#f4cccc');
+    show(
+      'Занадто довге значення',
+      '#f4cccc'
+    );
     return;
   }
 
@@ -1164,7 +1218,7 @@ async function startScanner(){
     return;
   }
 
-  if(scanning) return;
+  if(scanning)return;
 
   const current = ++token;
 
@@ -1189,7 +1243,9 @@ async function startScanner(){
 
     await video.play();
 
-    if(!scanning || current !== token) return;
+    if(!scanning || current !== token){
+      return;
+    }
 
     await configureCamera(
       stream.getVideoTracks()[0]
@@ -1197,7 +1253,9 @@ async function startScanner(){
 
     await setupDecoders();
 
-    if(!scanning || current !== token) return;
+    if(!scanning || current !== token){
+      return;
+    }
 
     frameCount = 0;
     startedAt = performance.now();
@@ -1227,7 +1285,9 @@ async function startScanner(){
 }
 
 function schedule(current,delay=40){
-  if(!scanning || current !== token) return;
+  if(!scanning || current !== token){
+    return;
+  }
 
   timer = setTimeout(
     ()=>scanFrame(current),
@@ -1239,15 +1299,27 @@ function drawRegion(mode){
   const w = video.videoWidth;
   const h = video.videoHeight;
 
-  if(!w || !h) return false;
+  if(!w || !h){
+    return false;
+  }
 
   const wide = mode === 'wide';
 
-  const sx = Math.floor(w * (wide ? .02 : .05));
-  const sy = Math.floor(h * (wide ? .25 : .38));
+  const sx = Math.floor(
+    w * (wide ? .02 : .05)
+  );
 
-  const sw = Math.floor(w * (wide ? .96 : .90));
-  const sh = Math.floor(h * (wide ? .50 : .24));
+  const sy = Math.floor(
+    h * (wide ? .25 : .38)
+  );
+
+  const sw = Math.floor(
+    w * (wide ? .96 : .90)
+  );
+
+  const sh = Math.floor(
+    h * (wide ? .50 : .24)
+  );
 
   const maxWidth = wide ? 1600 : 1280;
 
@@ -1276,7 +1348,9 @@ function drawRegion(mode){
 }
 
 function decodeZXing(){
-  if(!reader) return '';
+  if(!reader){
+    return '';
+  }
 
   try{
     const source =
@@ -1297,13 +1371,16 @@ function decodeZXing(){
 
   }catch(e){
     return '';
+
   }finally{
     reader.reset();
   }
 }
 
 async function scanFrame(current){
-  if(!scanning || current !== token) return;
+  if(!scanning || current !== token){
+    return;
+  }
 
   if(busy || awaitingConfirmation){
     schedule(current,100);
@@ -1326,22 +1403,29 @@ async function scanFrame(current){
         ? 'wide'
         : 'fast';
 
-    if(!drawRegion(mode)) return;
+    if(!drawRegion(mode)){
+      return;
+    }
 
     let code = '';
 
     if(detector){
       try{
-        const found = await detector.detect(canvas);
+        const found =
+          await detector.detect(canvas);
 
-        if(current !== token || !scanning) return;
+        if(current !== token || !scanning){
+          return;
+        }
 
         const item = found.find(
           x=>x.format === 'code_128'
         );
 
         if(item){
-          code = String(item.rawValue || '').trim();
+          code = String(
+            item.rawValue || ''
+          ).trim();
         }
 
       }catch(e){}
@@ -1367,6 +1451,7 @@ async function scanFrame(current){
       if(code === candidate &&
          now - candidateTime < 2000){
         candidateCount++;
+
       }else{
         candidate = code;
         candidateCount = 1;
@@ -1396,6 +1481,7 @@ async function scanFrame(current){
 
   }catch(e){
     console.warn(e);
+
   }finally{
     if(scanning && current === token){
       schedule(current,40);
@@ -1423,10 +1509,13 @@ async function processBarcode(code){
       location
     );
 
-    if(!scanning) return;
+    if(!scanning){
+      return;
+    }
 
     const seconds =
-      ((performance.now()-started)/1000).toFixed(1);
+      ((performance.now()-started)/1000)
+      .toFixed(1);
 
     if(data.status === 'found'){
       foundCount++;
@@ -1499,20 +1588,18 @@ async function processBarcode(code){
 
   }finally{
     busy = false;
-
-    if(statsPending && !awaitingConfirmation){
-      statsPending = false;
-      setTimeout(refreshGlobalStats,300);
-    }
+    runPendingStats();
   }
 }
 
-/* ДОДАВАННЯ НОМЕРА */
+/* ДОДАВАННЯ НОВОГО НОМЕРА */
 
 async function confirmAdd(){
   initSound();
 
-  if(!awaitingConfirmation || busy) return;
+  if(!awaitingConfirmation || busy){
+    return;
+  }
 
   const code = pendingBarcode;
   const location = sessionLocation;
@@ -1600,31 +1687,23 @@ async function confirmAdd(){
 
   }finally{
     busy = false;
-
-    if(statsPending && !awaitingConfirmation){
-      statsPending = false;
-      setTimeout(refreshGlobalStats,300);
-    }
+    runPendingStats();
   }
 }
 
 function closeConfirmation(){
   awaitingConfirmation = false;
   pendingBarcode = '';
-
   $('confirmBox').style.display = 'none';
 }
 
 function cancelAdd(){
-  if(busy) return;
+  if(busy)return;
 
   const code = pendingBarcode;
-
   closeConfirmation();
 
-  show(
-    'Додавання скасовано: ' + code
-  );
+  show('Додавання скасовано: ' + code);
 
   addHistory(
     code,
@@ -1632,10 +1711,7 @@ function cancelAdd(){
     'Скасовано'
   );
 
-  if(statsPending){
-    statsPending = false;
-    setTimeout(refreshGlobalStats,300);
-  }
+  runPendingStats();
 }
 
 /* РУЧНЕ ВВЕДЕННЯ */
@@ -1643,7 +1719,7 @@ function cancelAdd(){
 function manualScan(){
   initSound();
 
-  if(busy || awaitingConfirmation || requestScript){
+  if(busy || awaitingConfirmation || labelBusy){
     return;
   }
 
@@ -1708,7 +1784,6 @@ function stopScanner(){
   }
 
   video.srcObject = null;
-
   detector = null;
   reader = null;
 
@@ -1720,13 +1795,11 @@ function stopScanner(){
 
 window.addEventListener('pagehide',()=>{
   if(stream){
-    stream.getTracks().forEach(
-      t=>t.stop()
-    );
+    stream.getTracks().forEach(t=>t.stop());
   }
 });
 
-/* ПОЧАТКОВЕ ЗАВАНТАЖЕННЯ */
+/* ЗАПУСК СТАТИСТИКИ */
 
 updateStats();
 refreshGlobalStats();
@@ -1737,14 +1810,11 @@ setInterval(()=>{
   }
 },10000);
 
-document.addEventListener(
-  'visibilitychange',
-  ()=>{
-    if(!document.hidden){
-      refreshGlobalStats();
-    }
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden){
+    refreshGlobalStats();
   }
-);
+});
 
 </script>
 </body>
