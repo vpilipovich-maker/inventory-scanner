@@ -1645,6 +1645,34 @@ $('serialInput').addEventListener('keydown', e => {
 
 /* СТАТИСТИКА */
 
+/* ЗБЕРЕЖЕННЯ РОЗДІЛЬНОЇ ЗДАТНОСТІ */
+
+const resolutionSelect = $('resolution');
+
+// Відновлюємо попередній вибір
+try {
+  const savedResolution =
+    localStorage.getItem('inventoryResolution');
+
+  if (['1920', '1280', '640'].includes(savedResolution)) {
+    resolutionSelect.value = savedResolution;
+  }
+} catch (e) {
+  console.warn('Помилка читання налаштувань:', e);
+}
+
+// Запам'ятовуємо новий вибір
+resolutionSelect.addEventListener('change', () => {
+  try {
+    localStorage.setItem(
+      'inventoryResolution',
+      resolutionSelect.value
+    );
+  } catch (e) {
+    console.warn('Помилка збереження налаштувань:', e);
+  }
+});
+
 refreshGlobalStats();
 
 setInterval(() => {
