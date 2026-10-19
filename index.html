@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Держмитслужба — Інвентаризація 2026 (V12.6.9)</title>
+<title>Держмитслужба — Інвентаризація 2026 V12.6.11</title>
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -31,8 +31,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #statsStatus{color:#666;font-size:11px}
 .camera-box{position:relative;max-width:550px;margin:10px auto;background:#000;border-radius:12px;overflow:hidden;min-height:140px}
 video{width:100%;display:block}
-.scan-area{position:absolute;left:12%;top:40%;width:76%;height:20%;border:2px solid #00ff88;border-radius:8px;pointer-events:none;transform:rotate(var(--scan-angle,0deg));transition:transform .12s linear}
-.scan-line{position:absolute;left:15%;top:50%;width:70%;border-top:2px solid #00ff88;pointer-events:none;transform:rotate(var(--scan-angle,0deg));transition:transform .12s linear}
+.scan-area{position:absolute;left:12%;top:40%;width:76%;height:20%;border:2px solid #00ff88;border-radius:8px;pointer-events:none;transform:rotate(var(--scan-angle,0deg));transition:transform .18s ease-out}
+.scan-line{position:absolute;left:15%;top:50%;width:70%;border-top:2px solid #00ff88;pointer-events:none;transform:rotate(var(--scan-angle,0deg));transition:transform .18s ease-out}
 #result{max-width:550px;margin:10px auto;padding:13px;border-radius:10px;background:#e5e7eb;font-size:18px;font-weight:bold;overflow-wrap:anywhere}
 #details{max-width:550px;margin:8px auto;color:#555;font-size:13px}
 .form-panel{text-align:left}
@@ -180,89 +180,6 @@ const $ = id => document.getElementById(id);
 const video = $('camera');
 const cameraBox = document.querySelector('.camera-box');
 
-/* АВТОМАТИЧНИЙ ПОВОРОТ РАМКИ */
-
-let motionBaseline = null;
-let motionAngle = 0;
-let motionLastUpdate = 0;
-let motionEnabled = false;
-
-function wrapAngle(degrees) {
-  return ((degrees + 180) % 360 + 360) % 360 - 180;
-}
-
-function handleFrameMotion(event) {
-  if (!scanning || !motionEnabled) return;
-
-  const g = event.accelerationIncludingGravity;
-
-  if (!g ||
-      !Number.isFinite(g.x) ||
-      !Number.isFinite(g.y)) return;
-
-  const magnitude = Math.hypot(g.x, g.y);
-
-  if (magnitude < 2.5) return;
-
-  const now = performance.now();
-
-  if (now - motionLastUpdate < 65) return;
-
-  motionLastUpdate = now;
-
-  const angle = Math.atan2(g.x, g.y) * 180 / Math.PI;
-
-  if (motionBaseline === null) {
-    motionBaseline = angle;
-    return;
-  }
-
-  const target = wrapAngle(angle - motionBaseline);
-  const difference = wrapAngle(target - motionAngle);
-
-  if (Math.abs(difference) < 1.5) return;
-
-  motionAngle = wrapAngle(
-    motionAngle + difference * 0.32
-  );
-
-  cameraBox.style.setProperty(
-    '--scan-angle',
-    motionAngle.toFixed(1) + 'deg'
-  );
-}
-
-function startFrameMotion() {
-  motionBaseline = null;
-  motionAngle = 0;
-  motionLastUpdate = 0;
-
-  cameraBox.style.setProperty('--scan-angle', '0deg');
-
-  motionEnabled = true;
-
-  window.addEventListener(
-    'devicemotion',
-    handleFrameMotion
-  );
-}
-
-function stopFrameMotion() {
-  motionEnabled = false;
-
-  window.removeEventListener(
-    'devicemotion',
-    handleFrameMotion
-  );
-
-  motionBaseline = null;
-  motionAngle = 0;
-
-  cameraBox.style.setProperty('--scan-angle', '0deg');
-}
-
-/* ОСНОВНІ ЗМІННІ */
-
 let stream = null;
 let detector = null;
 let reader = null;
@@ -294,10 +211,36 @@ let requestSequence = 0;
 let pendingStatsPromise = null;
 
 const canvas = document.createElement('canvas');
-
 const ctx = canvas.getContext('2d', {
   willReadFrequently: true
 });
+
+/* ПОВОРОТ РАМКИ ЗА ШТРИХКОДОМ */
+
+let frameAngle = 0;
+let frameAngleUpdatedAt = 0;
+
+function normalizeAngle(angle) {
+  return ((angle + 90) % 180 + 180) % 180 - 90;
+}
+
+function setFrameAngle(angle) {
+  if (!Number.isFinite(angle)) return;
+
+  frameAngle = normalizeAngle(angle);
+  frameAngleUpdatedAt = performance.now();
+
+  cameraBox.style.setProperty(
+    '--scan-angle',
+    frameAngle.toFixed(1) + 'deg'
+  );
+}
+
+function resetFrameAngle() {
+  frameAngle = 0;
+  frameAngleUpdatedAt = 0;
+  cameraBox.style.setProperty('--scan-angle', '0deg');
+}
 
 /* ЗВУК */
 
@@ -306,19 +249,14 @@ function initSound() {
 
   try {
     if (!audioContext) {
-      const A =
-        window.AudioContext ||
-        window.webkitAudioContext;
-
+      const A = window.AudioContext || window.webkitAudioContext;
       if (!A) throw Error('Звук недоступний');
-
       audioContext = new A();
     }
 
     if (audioContext.state === 'suspended') {
       audioContext.resume().catch(console.warn);
     }
-
   } catch (e) {
     console.warn(e);
   }
@@ -375,7 +313,6 @@ async function testSound() {
     await audioContext?.resume();
     sound('scanned');
     setTimeout(() => sound('found'), 450);
-
   } catch (e) {
     show('Звук недоступний', '#f4cccc');
   }
@@ -400,7 +337,6 @@ function validCode(code) {
 
 function addHistory(code, status, message) {
   const item = document.createElement('div');
-
   item.className = 'history-item ' + status;
 
   item.textContent =
@@ -536,9 +472,7 @@ function finishActiveRequest(error, data) {
   if (!current || current.finished) return;
 
   current.finished = true;
-
   clearTimeout(current.timeout);
-
   current.script.onerror = null;
   current.script.remove();
 
@@ -623,7 +557,6 @@ function runPendingStats() {
 function hideLabel() {
   labelBarcode = '';
   labelReplace = false;
-
   $('labelBox').style.display = 'none';
   $('labelMessage').textContent = '';
 }
@@ -675,7 +608,6 @@ async function toggleLabel() {
   busy = true;
 
   renderLabel();
-
   $('labelMessage').textContent = 'Зберігаємо позначку…';
 
   try {
@@ -795,7 +727,6 @@ async function saveSerial() {
     }
 
     sound('found');
-
     $('serialInput').value = '';
     requestStatsRefresh();
 
@@ -994,6 +925,8 @@ async function startScanner() {
   awaitingConfirmation = false;
   $('startBtn').disabled = true;
 
+  resetFrameAngle();
+
   try {
     show('Запуск камери...');
 
@@ -1027,8 +960,6 @@ async function startScanner() {
     lastHandled = '';
     lastSeenAt = 0;
 
-    startFrameMotion();
-
     show('Наведіть штрихкод у рамку');
 
     $('details').textContent =
@@ -1053,44 +984,111 @@ function schedule(current, delay = 40) {
   }
 }
 
-function drawRegion(mode) {
+/*
+  V12.6.11
+  ОСНОВНЕ РОЗПІЗНАВАННЯ + ПОВОРОТ КАДРУ
+
+  0°   — швидка перевірка
+  45°  — додаткова
+  -45° — додаткова
+  90°  — додаткова
+
+  Додаткові кути перевіряються лише тоді,
+  коли звичайне розпізнавання не дало результату.
+*/
+
+function drawRegion(mode, rotation = 0) {
   const w = video.videoWidth;
   const h = video.videoHeight;
 
   if (!w || !h) return false;
 
   const wide = mode === 'wide';
+  const rotated = rotation !== 0;
 
-  const sx = Math.floor(w * (wide ? .02 : .05));
-  const sy = Math.floor(h * (wide ? .25 : .38));
-  const sw = Math.floor(w * (wide ? .96 : .90));
-  const sh = Math.floor(h * (wide ? .50 : .24));
+  if (!rotated) {
+    const sx = Math.floor(w * (wide ? .02 : .05));
+    const sy = Math.floor(h * (wide ? .25 : .38));
+    const sw = Math.floor(w * (wide ? .96 : .90));
+    const sh = Math.floor(h * (wide ? .50 : .24));
+
+    const scale = Math.min(
+      1,
+      (wide ? 1600 : 1280) / sw
+    );
+
+    canvas.width = Math.max(
+      1,
+      Math.round(sw * scale)
+    );
+
+    canvas.height = Math.max(
+      1,
+      Math.round(sh * scale)
+    );
+
+    ctx.drawImage(
+      video,
+      sx, sy, sw, sh,
+      0, 0,
+      canvas.width,
+      canvas.height
+    );
+
+    return true;
+  }
+
+  /*
+    Для повороту беремо більшу центральну область,
+    щоб діагональний штрихкод не обрізався.
+    Малюємо повернутий кадр на canvas.
+  */
+
+  const angle = rotation * Math.PI / 180;
+  const cos = Math.abs(Math.cos(angle));
+  const sin = Math.abs(Math.sin(angle));
+
+  const targetW = 960;
+  const targetH = 720;
 
   const scale = Math.min(
     1,
-    (wide ? 1600 : 1280) / sw
+    w / (targetW * cos + targetH * sin),
+    h / (targetW * sin + targetH * cos)
   );
 
-  canvas.width = Math.max(
-    1,
-    Math.round(sw * scale)
-  );
+  const sourceW = targetW * scale;
+  const sourceH = targetH * scale;
 
-  canvas.height = Math.max(
-    1,
-    Math.round(sh * scale)
-  );
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  ctx.save();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, targetW, targetH);
+
+  ctx.translate(targetW / 2, targetH / 2);
+  ctx.rotate(-angle);
 
   ctx.drawImage(
     video,
-    sx, sy, sw, sh,
-    0, 0,
-    canvas.width,
-    canvas.height
+    (w - sourceW) / 2,
+    (h - sourceH) / 2,
+    sourceW,
+    sourceH,
+    -targetW / 2,
+    -targetH / 2,
+    targetW,
+    targetH
   );
+
+  ctx.restore();
 
   return true;
 }
+
+/* ZXING */
 
 function decodeZXing() {
   if (!reader) return '';
@@ -1119,6 +1117,74 @@ function decodeZXing() {
   }
 }
 
+/* КУТ ЗА КООРДИНАТАМИ ШТРИХКОДУ */
+
+function barcodeAngle(item) {
+  const p = item?.cornerPoints;
+
+  if (!p || p.length < 4) return null;
+
+  /*
+    Визначаємо напрямок довшої сторони
+    прямокутника штрихкоду.
+  */
+
+  const edges = [
+    [p[0], p[1]],
+    [p[1], p[2]]
+  ];
+
+  const lengths = edges.map(([a, b]) =>
+    Math.hypot(b.x - a.x, b.y - a.y)
+  );
+
+  const index = lengths[0] >= lengths[1] ? 0 : 1;
+  const [a, b] = edges[index];
+
+  return normalizeAngle(
+    Math.atan2(b.y - a.y, b.x - a.x) *
+    180 / Math.PI
+  );
+}
+
+/* ОДНА СПРОБА РОЗПІЗНАВАННЯ */
+
+async function detectCurrentCanvas(
+  current,
+  allowZXing = true
+) {
+  let code = '';
+  let angle = null;
+
+  if (detector) {
+    try {
+      const found = await detector.detect(canvas);
+
+      if (current !== token || !scanning) {
+        return { code: '', angle: null };
+      }
+
+      const item = found.find(
+        x => x.format === 'code_128'
+      );
+
+      if (item) {
+        code = String(item.rawValue || '').trim();
+        angle = barcodeAngle(item);
+      }
+
+    } catch (e) {}
+  }
+
+  if (!code && reader && allowZXing) {
+    code = decodeZXing();
+  }
+
+  return { code, angle };
+}
+
+/* БЕЗПЕРЕРВНЕ СКАНУВАННЯ */
+
 async function scanFrame(current) {
   if (!scanning || current !== token) return;
 
@@ -1135,51 +1201,69 @@ async function scanFrame(current) {
   try {
     frameCount++;
 
-    const elapsed =
-      performance.now() - startedAt;
+    const elapsed = performance.now() - startedAt;
 
     const mode =
       elapsed > 2500 && frameCount % 3 === 0
         ? 'wide'
         : 'fast';
 
-    if (!drawRegion(mode)) return;
+    if (!drawRegion(mode, 0)) return;
 
-    let code = '';
+    let result = await detectCurrentCanvas(
+      current,
+      !detector ||
+      (elapsed > 1200 && frameCount % 3 === 0)
+    );
 
-    if (detector) {
-      try {
-        const found =
-          await detector.detect(canvas);
+    if (current !== token || !scanning) return;
+
+    /*
+      Якщо звичайна перевірка не спрацювала,
+      перевіряємо один додатковий кут.
+      Це зменшує навантаження на телефон.
+    */
+
+    if (
+      !validCode(result.code) &&
+      elapsed > 900 &&
+      frameCount % 2 === 0
+    ) {
+      const angles = [45, -45, 90];
+
+      const index =
+        Math.floor(frameCount / 2) % angles.length;
+
+      const rotation = angles[index];
+
+      if (drawRegion('wide', rotation)) {
+        const rotatedResult =
+          await detectCurrentCanvas(current, true);
 
         if (current !== token || !scanning) return;
 
-        const item = found.find(
-          x => x.format === 'code_128'
-        );
-
-        if (item) {
-          code = String(item.rawValue || '').trim();
+        if (validCode(rotatedResult.code)) {
+          result = {
+            code: rotatedResult.code,
+            angle: rotatedResult.angle === null
+              ? rotation
+              : normalizeAngle(
+                  rotatedResult.angle + rotation
+                )
+          };
         }
-
-      } catch (e) {}
+      }
     }
 
-    if (
-      !code &&
-      reader &&
-      (
-        !detector ||
-        (elapsed > 1200 && frameCount % 3 === 0)
-      )
-    ) {
-      code = decodeZXing();
-    }
-
+    const code = result.code;
     const now = performance.now();
 
     if (validCode(code)) {
       lastSeenAt = now;
+
+      if (result.angle !== null) {
+        setFrameAngle(result.angle);
+      }
 
       if (code === lastHandled) {
         candidate = '';
@@ -1216,6 +1300,18 @@ async function scanFrame(current) {
 
       if (now - lastSeenAt > 1500) {
         lastHandled = '';
+      }
+
+      /*
+        Якщо давно немає штрихкоду,
+        повертаємо рамку горизонтально.
+      */
+
+      if (
+        frameAngleUpdatedAt &&
+        now - frameAngleUpdatedAt > 2200
+      ) {
+        resetFrameAngle();
       }
     }
 
@@ -1427,10 +1523,10 @@ function manualScan() {
 /* ЗУПИНКА СКАНЕРА */
 
 function forceStopScanner() {
-  stopFrameMotion();
-
   scanning = false;
   token++;
+
+  resetFrameAngle();
 
   if (timer) {
     clearTimeout(timer);
@@ -1474,8 +1570,6 @@ function stopScanner() {
 /* ОБРОБНИКИ ПОДІЙ */
 
 window.addEventListener('pagehide', () => {
-  stopFrameMotion();
-
   if (stream) {
     stream.getTracks().forEach(t => t.stop());
   }
