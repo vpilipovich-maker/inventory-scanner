@@ -4,15 +4,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Держмитслужба — Інвентаризація V12.4</title>
+<title>Держмитслужба — Інвентаризація V12.5</title>
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:12px;font-family:Arial,sans-serif;text-align:center;background:#f5f6f8;color:#222}
-h2{margin:8px 0}h3{margin:10px 0}p{color:#555}
+h2{margin:8px 0}
+h3{margin:10px 0}
+p{color:#555}
 button{border:0;border-radius:9px;padding:12px 15px;margin:4px;font-size:16px;color:white;background:#1769aa;cursor:pointer}
 button:disabled{opacity:.5}
-.gray{background:#666}.red{background:#b3261e}
+.gray{background:#666}
+.red{background:#b3261e}
 .camera-box{position:relative;max-width:550px;margin:12px auto;background:#000;border-radius:12px;overflow:hidden}
 video{display:block;width:100%;height:auto}
 .scan-area{position:absolute;left:12%;top:40%;width:76%;height:20%;border:2px solid #00ff88;border-radius:8px;pointer-events:none}
@@ -41,6 +44,16 @@ video{display:block;width:100%;height:auto}
 .location-box button{width:100%;margin:14px 0 0}
 #locationForm{display:none}
 #activeLocation{max-width:550px;margin:10px auto;padding:12px;background:#dff2e4;border-radius:9px;font-weight:bold;display:none}
+
+/* ЗАГАЛЬНИЙ ЛІЧИЛЬНИК */
+.global-stats{max-width:550px;margin:12px auto;padding:14px;background:white;border:1px solid #ccd4dc;border-radius:12px}
+.global-stats h3{margin:0 0 10px}
+.global-grid{display:flex;gap:8px}
+.global-cell{flex:1;min-width:0;padding:10px 3px;background:#f5f6f8;border-radius:8px;font-size:12px}
+.global-cell strong{display:block;font-size:24px}
+.progress-track{height:12px;border-radius:10px;background:#e5e7eb;overflow:hidden;margin-top:10px}
+#globalProgress{height:100%;width:0;background:#188038;transition:width .3s}
+#statsStatus{font-size:12px;color:#666;margin-top:8px}
 </style>
 </head>
 <body>
@@ -48,13 +61,36 @@ video{display:block;width:100%;height:auto}
 <h2>Держмитслужба</h2>
 <h3>Інвентаризація 2026</h3>
 
+<div class="global-stats">
+  <h3>Загальний прогрес інвентаризації</h3>
+  <div class="global-grid">
+    <div class="global-cell">
+      <strong id="globalTotal">—</strong>Всього
+    </div>
+    <div class="global-cell">
+      <strong id="globalChecked">—</strong>Перевірено
+    </div>
+    <div class="global-cell">
+      <strong id="globalRemaining">—</strong>Залишилось
+    </div>
+  </div>
+  <div id="globalPercent" style="margin-top:10px;font-weight:bold">—</div>
+  <div class="progress-track">
+    <div id="globalProgress"></div>
+  </div>
+  <div id="statsStatus">Завантаження статистики…</div>
+</div>
+
 <div class="hint">
 Перший звук — штрихкод зчитано.<br>
 Другий звук — перевірку в Google Таблиці завершено.
 </div>
 
 <div class="sound-controls">
-<label><input type="checkbox" id="soundEnabled" checked> Звук увімкнено</label>
+<label>
+<input type="checkbox" id="soundEnabled" checked>
+Звук увімкнено
+</label>
 <button class="gray" onclick="testSound()">🔊 Перевірити звук</button>
 </div>
 
@@ -125,6 +161,8 @@ let requestScript=null, requestTimer=null;
 let requestResolve=null, requestReject=null;
 let foundCount=0, addedCount=0;
 let audioContext=null;
+let statsBusy=false;
+let statsPending=false;
 
 const canvas=document.createElement('canvas');
 const ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -230,16 +268,21 @@ function apiRequest(action,barcode,location=sessionLocation){
       reject(Error('Попередній запит ще триває'));
       return;
     }
-    if(!location?.building||!location?.room){
+    if(action!=='stats'&&(!location?.building||!location?.room)){
       reject(Error('Не вказано корпус або кабінет'));
       return;
     }
+
     const script=document.createElement('script');
     const url=new URL(SCRIPT_URL);
     url.searchParams.set('action',action);
-    url.searchParams.set('barcode',barcode);
-    url.searchParams.set('building',location.building);
-    url.searchParams.set('room',location.room);
+
+    if(action!=='stats'){
+      url.searchParams.set('barcode',barcode);
+      url.searchParams.set('building',location.building);
+      url.searchParams.set('room',location.room);
+    }
+
     url.searchParams.set('callback','inventoryCallback');
     url.searchParams.set('_',Date.now().toString());
 
@@ -261,6 +304,7 @@ function finishRequest(error,data){
   const reject=requestReject;
   requestResolve=null;
   requestReject=null;
+
   if(requestTimer){
     clearTimeout(requestTimer);
     requestTimer=null;
@@ -269,17 +313,68 @@ function finishRequest(error,data){
     requestScript.remove();
     requestScript=null;
   }
+
   if(error){
     if(reject)reject(error);
   }else if(resolve)resolve(data);
+
+  if(statsPending&&!statsBusy){
+    statsPending=false;
+    setTimeout(refreshGlobalStats,200);
+  }
 }
 
 window.inventoryCallback=data=>finishRequest(null,data);
+
+// ЗАГАЛЬНА СТАТИСТИКА
+async function refreshGlobalStats(){
+  if(statsBusy){
+    statsPending=true;
+    return;
+  }
+  if(requestScript){
+    statsPending=true;
+    return;
+  }
+
+  statsBusy=true;
+  try{
+    const data=await apiRequest('stats','');
+
+    if(data.status!=='stats'){
+      throw Error(data.message||'Невідома відповідь');
+    }
+
+    $('globalTotal').textContent=
+      Number(data.total).toLocaleString('uk-UA');
+    $('globalChecked').textContent=
+      Number(data.checked).toLocaleString('uk-UA');
+    $('globalRemaining').textContent=
+      Number(data.remaining).toLocaleString('uk-UA');
+    $('globalPercent').textContent=
+      Number(data.percent).toLocaleString('uk-UA')+'% виконано';
+    $('globalProgress').style.width=
+      Math.max(0,Math.min(100,Number(data.percent)))+'%';
+
+    $('statsStatus').textContent=
+      'Оновлено: '+new Date().toLocaleTimeString('uk-UA');
+  }catch(e){
+    $('statsStatus').textContent=
+      'Статистика тимчасово недоступна: '+e.message;
+  }finally{
+    statsBusy=false;
+    if(statsPending&&!requestScript){
+      statsPending=false;
+      setTimeout(refreshGlobalStats,200);
+    }
+  }
+}
 
 // КАМЕРА
 async function setupDecoders(){
   detector=null;
   reader=null;
+
   if('BarcodeDetector' in window){
     try{
       const formats=await BarcodeDetector.getSupportedFormats();
@@ -287,6 +382,7 @@ async function setupDecoders(){
         detector=new BarcodeDetector({formats:['code_128']});
     }catch(e){}
   }
+
   if(window.ZXing){
     const hints=new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,
@@ -295,6 +391,7 @@ async function setupDecoders(){
     reader=new ZXing.MultiFormatReader();
     reader.setHints(hints);
   }
+
   if(!detector&&!reader)
     throw Error('Розпізнавач недоступний');
 }
@@ -308,6 +405,7 @@ async function openCamera(){
     {facingMode:{ideal:'environment'}},
     true
   ];
+
   let error;
   for(const mode of modes){
     try{
@@ -326,6 +424,7 @@ async function openCamera(){
 async function configureCamera(track){
   try{
     const caps=track.getCapabilities?.()||{};
+
     if(caps.focusMode?.includes('continuous')){
       try{
         await track.applyConstraints({
@@ -333,6 +432,7 @@ async function configureCamera(track){
         });
       }catch(e){}
     }
+
     if(caps.zoom&&Number.isFinite(caps.zoom.min)&&
        Number.isFinite(caps.zoom.max)){
       const zoom=Math.max(caps.zoom.min,
@@ -362,6 +462,7 @@ function cancelLocation(){
 function confirmLocation(){
   const building=$('buildingInput').value.trim();
   const room=$('roomInput').value.trim();
+
   if(!building||!room){
     show('Заповніть корпус і кабінет','#f4cccc');
     return;
@@ -370,6 +471,7 @@ function confirmLocation(){
     show('Занадто довге значення','#f4cccc');
     return;
   }
+
   sessionLocation=Object.freeze({building,room});
   $('locationForm').style.display='none';
   $('activeLocation').textContent=
@@ -380,6 +482,7 @@ function confirmLocation(){
 
 async function startScanner(){
   initSound();
+
   if(!sessionLocation){
     requestLocation();
     return;
@@ -395,16 +498,21 @@ async function startScanner(){
   try{
     show('Запуск камери...');
     const opened=await openCamera();
+
     if(!scanning||current!==token){
       opened.getTracks().forEach(t=>t.stop());
       return;
     }
+
     stream=opened;
     video.srcObject=stream;
     await video.play();
+
     if(!scanning||current!==token)return;
+
     await configureCamera(stream.getVideoTracks()[0]);
     await setupDecoders();
+
     if(!scanning||current!==token)return;
 
     frameCount=0;
@@ -413,6 +521,7 @@ async function startScanner(){
     candidateCount=0;
     lastHandled='';
     lastSeenAt=0;
+
     show('Наведіть штрихкод у рамку');
     details.textContent='Камера працює безперервно';
     schedule(current,0);
@@ -431,6 +540,7 @@ function schedule(current,delay=40){
 function drawRegion(mode){
   const w=video.videoWidth,h=video.videoHeight;
   if(!w||!h)return false;
+
   const wide=mode==='wide';
   const sx=Math.floor(w*(wide?.02:.05));
   const sy=Math.floor(h*(wide?.25:.38));
@@ -438,6 +548,7 @@ function drawRegion(mode){
   const sh=Math.floor(h*(wide?.50:.24));
   const maxWidth=wide?1600:1280;
   const scale=Math.min(1,maxWidth/sw);
+
   canvas.width=Math.max(1,Math.round(sw*scale));
   canvas.height=Math.max(1,Math.round(sh*scale));
   ctx.drawImage(video,sx,sy,sw,sh,
@@ -463,10 +574,12 @@ function decodeZXing(){
 
 async function scanFrame(current){
   if(!scanning||current!==token)return;
+
   if(busy||awaitingConfirmation){
     schedule(current,100);
     return;
   }
+
   if(video.readyState<2){
     schedule(current,100);
     return;
@@ -477,9 +590,11 @@ async function scanFrame(current){
     const elapsed=performance.now()-startedAt;
     const mode=elapsed>2500&&frameCount%3===0
       ?'wide':'fast';
+
     if(!drawRegion(mode))return;
 
     let code='';
+
     if(detector){
       try{
         const found=await detector.detect(canvas);
@@ -488,25 +603,30 @@ async function scanFrame(current){
         if(item)code=String(item.rawValue||'').trim();
       }catch(e){}
     }
+
     if(!code&&reader&&
        (!detector||(elapsed>1200&&frameCount%3===0))){
       code=decodeZXing();
     }
 
     const now=performance.now();
+
     if(validCode(code)){
       lastSeenAt=now;
+
       if(code===lastHandled){
         candidate='';
         candidateCount=0;
         return;
       }
+
       if(code===candidate&&now-candidateTime<2000)
         candidateCount++;
       else{
         candidate=code;
         candidateCount=1;
       }
+
       candidateTime=now;
 
       if(candidateCount>=2){
@@ -533,6 +653,7 @@ async function scanFrame(current){
 async function processBarcode(code){
   const started=performance.now();
   const location=sessionLocation;
+
   show('Перевіряємо: '+code,'#fff3cd');
 
   try{
@@ -544,21 +665,28 @@ async function processBarcode(code){
     if(data.status==='found'){
       foundCount++;
       updateStats();
+      statsPending=true;
+
       show('ЗНАЙДЕНО: '+code,'#b7e1cd');
       details.textContent='Рядок '+data.row+
         ' | Запит: '+seconds+' с';
+
       addHistory(code,'found','Знайдено | Корпус '+
         location.building+', каб. '+location.room);
+
       sound('found');
       navigator.vibrate?.(80);
+
     }else if(data.status==='not_found'){
       awaitingConfirmation=true;
       pendingBarcode=code;
       $('confirmCode').textContent=code;
       $('confirmBox').style.display='block';
+
       show('НЕ ЗНАЙДЕНО: '+code,'#fff0c2');
       details.textContent='Потрібне підтвердження додавання';
       sound('not_found');
+
     }else{
       throw Error(data.message||'Невідома відповідь сервера');
     }
@@ -568,42 +696,62 @@ async function processBarcode(code){
     sound('error');
   }finally{
     busy=false;
+    if(statsPending){
+      statsPending=false;
+      setTimeout(refreshGlobalStats,200);
+    }
   }
 }
 
 async function confirmAdd(){
   initSound();
   if(!awaitingConfirmation||busy)return;
+
   const code=pendingBarcode;
   const location=sessionLocation;
   busy=true;
+
   show('Додаємо номер: '+code,'#fff3cd');
 
   try{
     const data=await apiRequest('add',code,location);
+
     if(data.status==='added'){
       addedCount++;
       updateStats();
+      statsPending=true;
+
       show('ДОДАНО: '+code,'#fff0c2');
       details.textContent='Новий номер у рядку '+data.row;
+
       addHistory(code,'added','Додано | Корпус '+
         location.building+', каб. '+location.room);
+
       sound('found');
+
     }else if(data.status==='found'){
       foundCount++;
       updateStats();
+      statsPending=true;
+
       show('ЗНАЙДЕНО: '+code,'#b7e1cd');
       addHistory(code,'found','Знайдено');
       sound('found');
+
     }else{
       throw Error(data.message||'Не вдалося додати номер');
     }
+
     closeConfirmation();
   }catch(e){
     show('Помилка додавання: '+e.message,'#f4cccc');
     sound('error');
   }finally{
     busy=false;
+    if(statsPending){
+      statsPending=false;
+      setTimeout(refreshGlobalStats,200);
+    }
   }
 }
 
@@ -624,17 +772,21 @@ function cancelAdd(){
 function manualScan(){
   initSound();
   if(busy||awaitingConfirmation)return;
+
   if(!scanning||!sessionLocation){
     show('Спочатку натисніть «Почати сканування» та вкажіть місце',
       '#fff0c2');
     return;
   }
+
   const input=$('manualCode');
   const code=input.value.trim();
+
   if(!validCode(code)){
     show('Введіть інвентарний номер','#f4cccc');
     return;
   }
+
   lastHandled=code;
   busy=true;
   input.value='';
@@ -649,6 +801,7 @@ function stopScanner(){
       '#fff0c2');
     return;
   }
+
   sessionLocation=null;
   $('activeLocation').style.display='none';
   $('locationForm').style.display='none';
@@ -659,14 +812,17 @@ function stopScanner(){
     clearTimeout(timer);
     timer=null;
   }
+
   if(stream){
     stream.getTracks().forEach(track=>track.stop());
     stream=null;
   }
+
   video.srcObject=null;
   detector=null;
   reader=null;
   $('startBtn').disabled=false;
+
   show('Сканування зупинено');
 }
 
@@ -674,7 +830,17 @@ window.addEventListener('pagehide',()=>{
   if(stream)stream.getTracks().forEach(t=>t.stop());
 });
 
+// ЗАПУСК ЗАГАЛЬНОГО ЛІЧИЛЬНИКА
 updateStats();
+refreshGlobalStats();
+
+setInterval(()=>{
+  if(!document.hidden)refreshGlobalStats();
+},10000);
+
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshGlobalStats();
+});
 </script>
 </body>
 </html>
