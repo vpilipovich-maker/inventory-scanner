@@ -5,445 +5,111 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Держмитслужба — Інвентаризація 2026</title>
-
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  padding:10px;
-  font-family:Arial,sans-serif;
-  text-align:center;
-  background:#f5f6f8;
-  color:#222;
-}
-
-h2{margin:6px 0;font-size:25px}
-h3{margin:8px 0;font-size:19px}
-p{color:#555}
-
-button{
-  border:0;
-  border-radius:9px;
-  padding:12px 15px;
-  margin:4px;
-  font-size:16px;
-  color:white;
-  background:#1769aa;
-  cursor:pointer;
-}
-
+body{margin:0;padding:10px;font-family:Arial,sans-serif;text-align:center;background:#f5f6f8;color:#222}
+h1{font-size:21px;margin:5px 0 2px}
+h2{font-size:17px;margin:0 0 10px}
+h3{font-size:17px;margin:8px 0}
+button{border:0;border-radius:9px;padding:12px 15px;margin:4px;font-size:16px;color:#fff;background:#1769aa;cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
 .gray{background:#666}
-.red{background:#b3261e}
 .green{background:#188038}
-.orange{background:#e67e00;font-weight:bold}
+.orange{background:#c77700}
 .purple{background:#6941a5}
-
-.global-stats{
-  max-width:550px;
-  margin:10px auto;
-  padding:11px;
-  background:white;
-  border:1px solid #ccd4dc;
-  border-radius:12px;
-}
-
-.global-heading{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:8px;
-  margin-bottom:9px;
-  text-align:left;
-}
-
-.global-heading h3{
-  margin:0;
-  font-size:17px;
-}
-
-#globalPercent{
-  font-size:15px;
-  font-weight:bold;
-  color:#188038;
-  flex-shrink:0;
-}
-
-.global-grid{
-  display:flex;
-  gap:7px;
-}
-
-.global-cell{
-  flex:1;
-  min-width:0;
-  padding:7px 3px;
-  background:#f5f6f8;
-  border-radius:8px;
-  font-size:12px;
-}
-
-.global-cell strong{
-  display:block;
-  font-size:20px;
-  line-height:1.3;
-}
-
-.progress-track{
-  height:7px;
-  border-radius:10px;
-  background:#e5e7eb;
-  overflow:hidden;
-  margin-top:9px;
-}
-
-#globalProgress{
-  height:100%;
-  width:0;
-  background:#188038;
-  transition:width .3s;
-}
-
-.global-footer{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:9px;
-  font-size:12px;
-}
-
-#statsStatus{
-  color:#666;
-  font-size:11px;
-}
-
-.hint{
-  max-width:550px;
-  margin:8px auto;
-  padding:8px;
-  border-radius:9px;
-  background:#e8f2ff;
-  color:#17578c;
-  font-size:13px;
-}
-
-.sound-controls{
-  max-width:550px;
-  margin:8px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.sound-controls label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:15px;
-}
-
-.sound-controls input{
-  width:19px;
-  height:19px;
-}
-
-.location-box,.serial-box{
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:white;
-  border:1px solid #ccd4dc;
-  border-radius:12px;
-  text-align:left;
-}
-
-.location-box label,.serial-box label{
-  display:block;
-  margin:10px 0 5px;
-  font-weight:bold;
-}
-
-.location-box input,.serial-box input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
-}
-
-.location-box button,.serial-box button{
-  width:100%;
-  margin:12px 0 0;
-}
-
-#locationForm,#serialForm{display:none}
-
-#activeLocation{
-  max-width:550px;
-  margin:10px auto;
-  padding:12px;
-  background:#dff2e4;
-  border-radius:9px;
-  font-weight:bold;
-  display:none;
-}
-
-.camera-box{
-  position:relative;
-  max-width:550px;
-  margin:10px auto;
-  background:#000;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-video{
-  display:block;
-  width:100%;
-  height:auto;
-}
-
-.scan-area{
-  position:absolute;
-  left:12%;
-  top:40%;
-  width:76%;
-  height:20%;
-  border:2px solid #00ff88;
-  border-radius:8px;
-  pointer-events:none;
-}
-
-.scan-line{
-  position:absolute;
-  left:15%;
-  top:50%;
-  width:70%;
-  border-top:2px solid #00ff88;
-  pointer-events:none;
-}
-
-#result{
-  max-width:550px;
-  margin:10px auto;
-  padding:13px;
-  border-radius:10px;
-  background:#e5e7eb;
-  font-size:18px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-}
-
-#details{
-  max-width:550px;
-  font-size:13px;
-  color:#555;
-  margin:8px auto;
-}
-
-#labelBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:15px;
-  background:white;
-  border:1px solid #e1bd62;
-  border-radius:12px;
-}
-
-#labelCode{
-  font-size:21px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-  margin:8px 0;
-}
-
-#labelState{
-  margin:10px 0;
-  font-weight:bold;
-}
-
-#labelAction{
-  width:95%;
-  max-width:350px;
-  min-height:52px;
-}
-
-#labelMessage{
-  font-size:13px;
-  color:#555;
-  margin-top:8px;
-}
-
-#serialBtn{
-  max-width:550px;
-  width:calc(100% - 8px);
-  min-height:48px;
-}
-
-.serial-location{
-  padding:9px;
-  background:#dff2e4;
-  border-radius:8px;
-  font-size:14px;
-  text-align:center;
-}
-
-#confirmBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:#fff1cc;
-  border:1px solid #e1bd62;
-  border-radius:10px;
-}
-
-#confirmCode{
-  font-size:24px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-}
-
-.manual{
-  max-width:550px;
-  margin:12px auto;
-}
-
-.manual input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
-}
-
-#history{
-  max-width:550px;
-  margin:15px auto;
-  text-align:left;
-}
-
-.history-item{
-  background:white;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border-left:5px solid #aaa;
-  overflow-wrap:anywhere;
-}
-
+.red{background:#b3261e}
+.panel{max-width:550px;margin:10px auto;padding:12px;background:white;border:1px solid #ccd4dc;border-radius:12px}
+.stats-header,.stats-footer{display:flex;justify-content:space-between;align-items:center;gap:7px}
+.stats-header{font-weight:bold;font-size:16px;text-align:left}
+.stats-grid{display:flex;gap:7px;margin-top:10px}
+.stat{flex:1;background:#f5f6f8;border-radius:9px;padding:7px 3px;font-size:12px}
+.stat strong{display:block;font-size:21px}
+.progress{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin:10px 0}
+.progress>div{width:0;height:100%;background:#188038}
+.stats-footer{font-size:12px;flex-wrap:wrap}
+#statsStatus{color:#666;font-size:11px}
+.camera-box{position:relative;max-width:550px;margin:10px auto;background:#000;border-radius:12px;overflow:hidden;min-height:140px}
+video{width:100%;display:block}
+.scan-area{position:absolute;left:12%;top:40%;width:76%;height:20%;border:2px solid #00ff88;border-radius:8px;pointer-events:none}
+.scan-line{position:absolute;left:15%;top:50%;width:70%;border-top:2px solid #00ff88;pointer-events:none}
+#result{max-width:550px;margin:10px auto;padding:13px;border-radius:10px;background:#e5e7eb;font-size:18px;font-weight:bold;overflow-wrap:anywhere}
+#details{max-width:550px;margin:8px auto;color:#555;font-size:13px}
+.form-panel{text-align:left}
+.form-panel label{display:block;font-weight:bold;margin-bottom:7px}
+.form-panel input,.location-box input{width:100%;padding:12px;border:1px solid #aaa;border-radius:9px;font-size:17px}
+.form-panel button{width:100%;margin:9px 0 0}
+.form-panel small{display:block;color:#666;margin-top:7px;line-height:1.4}
+.location-box{text-align:left;display:none}
+.location-box label{display:block;font-weight:bold;margin:10px 0 5px}
+.location-box button{width:100%;margin:10px 0 0}
+#activeLocation{display:none;background:#dff2e4;font-weight:bold}
+#confirmBox,#labelBox{display:none}
+#confirmCode,#labelCode{font-size:21px;font-weight:bold;overflow-wrap:anywhere;margin:8px 0}
+#labelState{font-weight:bold;margin:10px}
+#labelAction{width:95%;max-width:350px}
+#labelMessage{font-size:13px;color:#555;margin-top:8px}
+#history{max-width:550px;margin:12px auto;text-align:left}
+.history-item{background:white;padding:9px;margin:5px 0;border-radius:8px;border-left:5px solid #aaa;overflow-wrap:anywhere}
 .history-item.found{border-color:#188038}
 .history-item.added{border-color:#c68100}
 .history-item.error{border-color:#c62828}
 .history-item.serial{border-color:#6941a5}
-
+details.settings{text-align:left}
+details.settings summary{cursor:pointer;font-weight:bold;font-size:17px}
+details.settings label{display:block;margin:14px 0;font-size:15px}
+details.settings select{width:100%;padding:9px;font-size:16px;border-radius:7px}
+details.settings input[type=checkbox]{width:19px;height:19px;vertical-align:middle}
+#torchBtn{display:none}
+#torchStatus{font-size:12px;color:#666}
+#globalPercent{color:#188038}
+#settingsInfo{font-size:12px;color:#666;margin:8px 0}
+#startBtn{margin-top:8px}
 @media(max-width:400px){
-  body{padding:8px}
-  h2{font-size:23px}
-  h3{font-size:18px}
-  .global-stats{padding:9px}
-  .global-heading h3{font-size:15px}
-  .global-cell strong{font-size:18px}
-  .global-cell{font-size:11px}
-  button{font-size:15px;padding:11px}
+body{padding:8px}
+.stat strong{font-size:18px}
+.stats-header{font-size:14px}
+button{font-size:15px}
 }
 </style>
 </head>
-
 <body>
 
-<h2>Держмитслужба</h2>
-<h3>Інвентаризація 2026</h3>
+<h1>Держмитслужба</h1>
+<h2>Інвентаризація 2026</h2>
 
-<div class="global-stats">
-  <div class="global-heading">
-    <h3>Прогрес інвентаризації</h3>
+<div class="panel">
+  <div class="stats-header">
+    <span>Прогрес інвентаризації</span>
     <span id="globalPercent">—</span>
   </div>
-
-  <div class="global-grid">
-    <div class="global-cell">
-      <strong id="globalTotal">—</strong>
-      Всього
-    </div>
-    <div class="global-cell">
-      <strong id="globalChecked">—</strong>
-      Перевірено
-    </div>
-    <div class="global-cell">
-      <strong id="globalRemaining">—</strong>
-      Залишилось
-    </div>
+  <div class="stats-grid">
+    <div class="stat"><strong id="globalTotal">—</strong>Всього</div>
+    <div class="stat"><strong id="globalChecked">—</strong>Перевірено</div>
+    <div class="stat"><strong id="globalRemaining">—</strong>Залишилось</div>
   </div>
-
-  <div class="progress-track">
-    <div id="globalProgress"></div>
-  </div>
-
-  <div class="global-footer">
-    <span>🏷️ Замінити: <strong id="globalLabels">—</strong></span>
-    <span>🏷️ Поклеїти: <strong id="globalStickers">—</strong></span>
+  <div class="progress"><div id="globalProgress"></div></div>
+  <div class="stats-footer">
+    <span>🏷️ Замінити: <b id="globalLabels">—</b></span>
+    <span>🏷️ Поклеїти: <b id="globalStickers">—</b></span>
     <span id="statsStatus">Оновлення…</span>
   </div>
 </div>
 
-<div class="hint">
-  Перший звук — штрихкод зчитано.<br>
-  Другий звук — перевірку в Google Таблиці завершено.
+<div id="activeLocation" class="panel"></div>
+
+<div id="locationForm" class="panel location-box">
+  <h3>Місце інвентаризації</h3>
+  <label for="buildingInput">Корпус</label>
+  <input id="buildingInput" maxlength="100" autocomplete="off">
+  <label for="roomInput">Кабінет</label>
+  <input id="roomInput" maxlength="100" autocomplete="off">
+  <button onclick="confirmLocation()">Підтвердити та сканувати</button>
+  <button class="gray" onclick="cancelLocation()">Скасувати</button>
 </div>
 
-<div class="sound-controls">
-  <label>
-    <input type="checkbox" id="soundEnabled" checked>
-    Звук увімкнено
-  </label>
-
-  <button class="gray" onclick="testSound()">
-    🔊 Перевірити звук
-  </button>
-</div>
-
-<div id="activeLocation"></div>
-
-<div id="locationForm" class="location-box">
-  <strong>Місце інвентаризації</strong>
-
-  <label for="buildingInput">Корпус (G)</label>
-  <input id="buildingInput"
-         maxlength="100"
-         autocomplete="off"
-         placeholder="Наприклад: 1">
-
-  <label for="roomInput">Кабінет (H)</label>
-  <input id="roomInput"
-         maxlength="100"
-         autocomplete="off"
-         placeholder="Наприклад: 205">
-
-  <button onclick="confirmLocation()">
-    Підтвердити та сканувати
-  </button>
-
-  <button class="gray" onclick="cancelLocation()">
-    Скасувати
-  </button>
-</div>
-
-<button id="startBtn" onclick="requestLocation()">
-  Почати сканування
-</button>
-
-<button class="gray" onclick="stopScanner()">
-  Зупинити
-</button>
+<button id="startBtn" onclick="requestLocation()">Почати сканування</button>
+<button class="gray" onclick="stopScanner()">Зупинити</button>
 
 <div class="camera-box">
   <video id="camera" autoplay playsinline muted></video>
@@ -451,125 +117,115 @@ video{
   <div class="scan-line"></div>
 </div>
 
+<div>
+  <button id="torchBtn" class="gray" onclick="toggleTorch()">
+    🔦 Ліхтарик: вимкнено
+  </button>
+  <span id="torchStatus"></span>
+</div>
+
 <div id="result">Очікування сканування...</div>
 <div id="details"></div>
 
-<div id="labelBox">
+<div id="labelBox" class="panel">
   <h3>🏷️ Стан інвентарної наліпки</h3>
-
   <div id="labelCode"></div>
   <div id="labelState"></div>
-
-  <button id="labelAction"
-          class="orange"
-          onclick="toggleLabel()">
+  <button id="labelAction" class="orange" onclick="toggleLabel()">
     Замінити наліпку
   </button>
-
   <div id="labelMessage"></div>
 </div>
 
-<!-- НОВА ФУНКЦІЯ -->
-
-<button id="serialBtn"
-        class="purple"
-        onclick="openSerialForm()">
-  🏷️ Немає інвентарної наліпки
-</button>
-
-<div id="serialForm" class="serial-box">
-  <h3>Обладнання без наліпки</h3>
-
-  <div id="serialLocation" class="serial-location"></div>
-
-  <label for="serialInput">Серійний номер *</label>
-
-  <input id="serialInput"
-         maxlength="150"
-         autocomplete="off"
-         autocapitalize="characters"
-         placeholder="Введіть серійний номер">
-
-  <button id="saveSerialBtn"
-          class="green"
-          onclick="saveSerial()">
-    Зберегти обладнання
-  </button>
-
-  <button class="gray" onclick="closeSerialForm()">
-    Скасувати
-  </button>
+<div class="panel form-panel">
+  <label for="manualCode">Інвентарний номер</label>
+  <input id="manualCode"
+         placeholder="Введіть інвентарний номер"
+         autocomplete="off">
+  <button onclick="manualScan()">Перевірити інвентарний номер</button>
+  <small>Якщо наліпка пошкоджена, але інвентарний номер можна прочитати.</small>
 </div>
 
-<div id="confirmBox">
+<div class="panel form-panel">
+  <label for="serialInput">Серійний номер обладнання</label>
+  <input id="serialInput"
+         placeholder="Введіть серійний номер"
+         autocomplete="off">
+  <button id="saveSerialBtn" class="purple" onclick="saveSerial()">
+    Зберегти серійний номер
+  </button>
+  <small>Якщо інвентарної наліпки немає. Запис у K:O з пошуком серійного номера в F.</small>
+</div>
+
+<div id="confirmBox" class="panel">
   <h3>Номер не знайдено</h3>
   <div id="confirmCode"></div>
-
-  <p>Додати цей номер у Google Таблицю?</p>
-
-  <button class="red" onclick="confirmAdd()">
-    Додати
-  </button>
-
-  <button class="gray" onclick="cancelAdd()">
-    Скасувати
-  </button>
-</div>
-
-<div class="manual">
-  <input id="manualCode"
-         placeholder="Ввести інвентарний номер вручну">
-
-  <button onclick="manualScan()">
-    Перевірити номер
-  </button>
+  <p>Додати цей інвентарний номер у Google Таблицю?</p>
+  <button class="red" onclick="confirmAdd()">Додати</button>
+  <button class="gray" onclick="cancelAdd()">Скасувати</button>
 </div>
 
 <h3>Історія сканування</h3>
 <div id="history"></div>
 
+<details class="panel settings">
+  <summary>⚙️ Налаштування</summary>
+  <label>
+    <input type="checkbox" id="soundEnabled" checked>
+    Звукові сигнали
+  </label>
+  <button class="gray" onclick="testSound()">🔊 Перевірити звук</button>
+  <label>
+    <input type="checkbox" id="autoTorch" checked>
+    Автоматично вмикати ліхтарик
+  </label>
+  <label for="resolution">Роздільна здатність камери</label>
+  <select id="resolution">
+    <option value="1920">Висока (1920 × 1080)</option>
+    <option value="1280">Стандартна (1280 × 720)</option>
+    <option value="640">Економна (640 × 480)</option>
+  </select>
+  <div id="settingsInfo">
+    Зміна роздільної здатності застосовується після повторного запуску камери.
+    Фактична роздільна здатність залежить від пристрою.
+  </div>
+</details>
+
 <script>
 'use strict';
 
 const SCRIPT_URL =
-'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
+  'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
 
 const $ = id => document.getElementById(id);
-
 const video = $('camera');
-const resultBox = $('result');
-const details = $('details');
 
 let stream = null;
 let detector = null;
 let reader = null;
-
 let scanning = false;
 let busy = false;
 let awaitingConfirmation = false;
-let serialFormOpen = false;
+let labelBusy = false;
 
 let token = 0;
 let timer = null;
 let frameCount = 0;
 let startedAt = 0;
-
 let candidate = '';
 let candidateCount = 0;
 let candidateTime = 0;
-
 let lastHandled = '';
 let lastSeenAt = 0;
 let pendingBarcode = '';
 
 let sessionLocation = null;
 let audioContext = null;
-
 let statsPending = false;
-
 let labelBarcode = '';
 let labelReplace = false;
-let labelBusy = false;
+let torchEnabled = false;
+let torchAvailable = false;
 
 const requestQueue = [];
 let activeRequest = null;
@@ -577,155 +233,140 @@ let requestSequence = 0;
 let pendingStatsPromise = null;
 
 const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d',{
-  willReadFrequently:true
+const ctx = canvas.getContext('2d', {
+  willReadFrequently: true
 });
 
 /* ЗВУК */
 
-function initSound(){
-  if(!$('soundEnabled').checked)return;
+function initSound() {
+  if (!$('soundEnabled').checked) return;
 
-  try{
-    if(!audioContext){
-      const Audio =
-        window.AudioContext ||
-        window.webkitAudioContext;
-
-      if(!Audio){
-        throw Error('Web Audio API недоступний');
-      }
-
-      audioContext = new Audio();
+  try {
+    if (!audioContext) {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) throw Error('Звук недоступний');
+      audioContext = new A();
     }
 
-    if(audioContext.state === 'suspended'){
+    if (audioContext.state === 'suspended') {
       audioContext.resume().catch(console.warn);
     }
-  }catch(e){
-    console.warn('Звук:',e);
+  } catch (e) {
+    console.warn(e);
   }
 }
 
-function tone(hz,duration,offset=0){
-  if(!$('soundEnabled').checked ||
-     !audioContext ||
-     audioContext.state !== 'running'){
-    return;
-  }
+function tone(hz, duration, offset = 0) {
+  if (
+    !$('soundEnabled').checked ||
+    !audioContext ||
+    audioContext.state !== 'running'
+  ) return;
 
-  const t = audioContext.currentTime+offset;
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+  const t = audioContext.currentTime + offset;
+  const o = audioContext.createOscillator();
+  const g = audioContext.createGain();
 
-  oscillator.type = 'square';
-  oscillator.frequency.setValueAtTime(hz,t);
+  o.type = 'square';
+  o.frequency.setValueAtTime(hz, t);
 
-  gain.gain.setValueAtTime(.0001,t);
-  gain.gain.linearRampToValueAtTime(.65,t+.008);
-  gain.gain.setValueAtTime(.65,t+duration-.02);
-  gain.gain.linearRampToValueAtTime(.0001,t+duration);
+  g.gain.setValueAtTime(.0001, t);
+  g.gain.linearRampToValueAtTime(.65, t + .008);
+  g.gain.setValueAtTime(.65, t + duration - .02);
+  g.gain.linearRampToValueAtTime(.0001, t + duration);
 
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+  o.connect(g);
+  g.connect(audioContext.destination);
 
-  oscillator.start(t);
-  oscillator.stop(t+duration+.02);
+  o.start(t);
+  o.stop(t + duration + .02);
 }
 
-function sound(type){
-  if(type==='scanned'){
-    tone(1450,.09);
-  }else if(type==='found'){
-    tone(850,.17);
-  }else if(type==='not_found'){
-    tone(550,.14);
-    tone(550,.14,.22);
-  }else if(type==='error'){
-    tone(320,.40);
+function sound(type) {
+  if (type === 'scanned') {
+    tone(1450, .09);
+  } else if (type === 'found') {
+    tone(850, .17);
+  } else if (type === 'not_found') {
+    tone(550, .14);
+    tone(550, .14, .22);
+  } else if (type === 'error') {
+    tone(320, .4);
   }
 }
 
-async function testSound(){
+async function testSound() {
   initSound();
 
-  if(!$('soundEnabled').checked){
-    show('Увімкніть звук перемикачем','#fff0c2');
+  if (!$('soundEnabled').checked) {
+    show('Увімкніть звук у налаштуваннях', '#fff0c2');
     return;
   }
 
-  if(!audioContext){
-    show('Звук недоступний','#f4cccc');
-    return;
-  }
-
-  try{
-    await audioContext.resume();
+  try {
+    await audioContext?.resume();
     sound('scanned');
-    setTimeout(()=>sound('found'),450);
-  }catch(e){
-    show('Браузер не дозволив звук','#f4cccc');
+    setTimeout(() => sound('found'), 450);
+  } catch (e) {
+    show('Звук недоступний', '#f4cccc');
   }
 }
 
-$('soundEnabled').addEventListener('change',e=>{
-  if(e.target.checked)initSound();
+$('soundEnabled').addEventListener('change', e => {
+  if (e.target.checked) initSound();
 });
 
 /* ІНТЕРФЕЙС */
 
-function show(text,color='#e5e7eb'){
-  resultBox.textContent=text;
-  resultBox.style.background=color;
+function show(text, color = '#e5e7eb') {
+  $('result').textContent = text;
+  $('result').style.background = color;
 }
 
-function validCode(code){
-  return typeof code==='string' &&
-    code.trim().length>0 &&
-    code.trim().length<=150;
+function validCode(code) {
+  return typeof code === 'string' &&
+    code.trim().length > 0 &&
+    code.trim().length <= 150;
 }
 
-function addHistory(code,status,message){
-  const item=document.createElement('div');
-
-  item.className='history-item '+status;
-
-  item.textContent=
-    new Date().toLocaleTimeString('uk-UA')+
-    ' | '+code+' | '+message;
+function addHistory(code, status, message) {
+  const item = document.createElement('div');
+  item.className = 'history-item ' + status;
+  item.textContent =
+    new Date().toLocaleTimeString('uk-UA') +
+    ' | ' + code + ' | ' + message;
 
   $('history').prepend(item);
 
-  while($('history').children.length>20){
+  while ($('history').children.length > 20) {
     $('history').lastElementChild.remove();
   }
 }
 
-/* ЗАПИТИ GOOGLE APPS SCRIPT */
+/* GOOGLE APPS SCRIPT */
 
 function apiRequest(
   action,
-  barcode='',
-  location=sessionLocation,
-  extra={}
-){
-  if(action==='stats' && pendingStatsPromise){
+  barcode = '',
+  location = sessionLocation,
+  extra = {}
+) {
+  if (action === 'stats' && pendingStatsPromise) {
     return pendingStatsPromise;
   }
 
-  const promise=new Promise((resolve,reject)=>{
-    if(
-      (action==='scan' ||
-       action==='add' ||
-       action==='serial') &&
+  const promise = new Promise((resolve, reject) => {
+    if (
+      ['scan', 'add', 'serial'].includes(action) &&
       (!location?.building || !location?.room)
-    ){
+    ) {
       reject(Error('Не вказано корпус або кабінет'));
       return;
     }
 
-    const job={
-      id:++requestSequence,
+    const job = {
+      id: ++requestSequence,
       action,
       barcode,
       location,
@@ -734,435 +375,343 @@ function apiRequest(
       reject
     };
 
-    if(action==='stats'){
+    if (action === 'stats') {
       requestQueue.push(job);
-    }else{
-      const index=requestQueue.findIndex(
-        item=>item.action==='stats'
+    } else {
+      const i = requestQueue.findIndex(
+        x => x.action === 'stats'
       );
 
-      if(index<0){
+      if (i < 0) {
         requestQueue.push(job);
-      }else{
-        requestQueue.splice(index,0,job);
+      } else {
+        requestQueue.splice(i, 0, job);
       }
     }
 
     processQueue();
   });
 
-  if(action==='stats'){
-    pendingStatsPromise=promise;
+  if (action === 'stats') {
+    pendingStatsPromise = promise;
 
-    promise.then(
-      ()=>{
-        if(pendingStatsPromise===promise){
-          pendingStatsPromise=null;
-        }
-      },
-      ()=>{
-        if(pendingStatsPromise===promise){
-          pendingStatsPromise=null;
-        }
+    promise.finally(() => {
+      if (pendingStatsPromise === promise) {
+        pendingStatsPromise = null;
       }
-    );
+    }).catch(() => {});
   }
 
   return promise;
 }
 
-function processQueue(){
-  if(activeRequest || requestQueue.length===0){
-    return;
+function processQueue() {
+  if (activeRequest || !requestQueue.length) return;
+
+  const job = requestQueue.shift();
+  const script = document.createElement('script');
+  const url = new URL(SCRIPT_URL);
+
+  url.searchParams.set('action', job.action);
+
+  if (job.action === 'serial') {
+    url.searchParams.set('serial', job.barcode);
+  } else if (job.action !== 'stats') {
+    url.searchParams.set('barcode', job.barcode);
   }
 
-  const job=requestQueue.shift();
-  const script=document.createElement('script');
-  const url=new URL(SCRIPT_URL);
-
-  url.searchParams.set('action',job.action);
-
-  if(job.action==='serial'){
-    url.searchParams.set('serial',job.barcode);
-  }else if(job.action!=='stats'){
-    url.searchParams.set('barcode',job.barcode);
+  if (['scan', 'add', 'serial'].includes(job.action)) {
+    url.searchParams.set('building', job.location.building);
+    url.searchParams.set('room', job.location.room);
   }
 
-  if(
-    job.action==='scan' ||
-    job.action==='add' ||
-    job.action==='serial'
-  ){
-    url.searchParams.set(
-      'building',job.location.building
-    );
-
-    url.searchParams.set(
-      'room',job.location.room
-    );
-  }
-
-  if(job.action==='label'){
+  if (job.action === 'label') {
     url.searchParams.set(
       'replace',
-      job.extra.replace?'1':'0'
+      job.extra.replace ? '1' : '0'
     );
   }
 
-  url.searchParams.set(
-    'callback','inventoryCallback'
-  );
+  url.searchParams.set('callback', 'inventoryCallback');
+  url.searchParams.set('_', Date.now() + '-' + job.id);
 
-  url.searchParams.set(
-    '_',Date.now()+'-'+job.id
-  );
-
-  const current={
+  const current = {
     job,
     script,
-    timeout:null,
-    finished:false
+    timeout: null,
+    finished: false
   };
 
-  activeRequest=current;
+  activeRequest = current;
 
-  script.src=url.toString();
-  script.async=true;
+  script.src = url.toString();
+  script.async = true;
 
-  script.onerror=()=>{
-    finishActiveRequest(
-      Error('Помилка зв’язку з Google Apps Script')
-    );
-  };
+  script.onerror = () => finishActiveRequest(
+    Error('Помилка зв’язку з Google Apps Script')
+  );
 
-  current.timeout=setTimeout(()=>{
+  current.timeout = setTimeout(() => {
     finishActiveRequest(
       Error('Час очікування відповіді минув')
     );
-  },15000);
+  }, 15000);
 
   document.head.appendChild(script);
 }
 
-function finishActiveRequest(error,data){
-  const current=activeRequest;
+function finishActiveRequest(error, data) {
+  const current = activeRequest;
 
-  if(!current || current.finished){
-    return;
-  }
+  if (!current || current.finished) return;
 
-  current.finished=true;
-
-  if(current.timeout){
-    clearTimeout(current.timeout);
-  }
-
-  current.script.onerror=null;
+  current.finished = true;
+  clearTimeout(current.timeout);
+  current.script.onerror = null;
   current.script.remove();
 
-  activeRequest=null;
+  activeRequest = null;
 
-  if(error){
+  if (error) {
     current.job.reject(error);
-  }else{
+  } else {
     current.job.resolve(data);
   }
 
-  setTimeout(processQueue,0);
+  setTimeout(processQueue, 0);
 }
 
-window.inventoryCallback=data=>{
-  finishActiveRequest(null,data);
+window.inventoryCallback = data => {
+  finishActiveRequest(null, data);
 };
 
 /* СТАТИСТИКА */
 
-async function refreshGlobalStats(){
-  if(busy || labelBusy ||
-     awaitingConfirmation || serialFormOpen){
-    statsPending=true;
+async function refreshGlobalStats() {
+  if (busy || labelBusy || awaitingConfirmation) {
+    statsPending = true;
     return;
   }
 
-  try{
-    const data=await apiRequest('stats');
+  try {
+    const data = await apiRequest('stats');
 
-    if(data.status!=='stats'){
-      throw Error(
-        data.message||'Невідома відповідь'
-      );
+    if (data.status !== 'stats') {
+      throw Error(data.message || 'Помилка статистики');
     }
 
-    $('globalTotal').textContent=
-      Number(data.total).toLocaleString('uk-UA');
+    for (const [id, key] of [
+      ['globalTotal', 'total'],
+      ['globalChecked', 'checked'],
+      ['globalRemaining', 'remaining'],
+      ['globalLabels', 'labels'],
+      ['globalStickers', 'stickers']
+    ]) {
+      $(id).textContent =
+        Number(data[key] || 0).toLocaleString('uk-UA');
+    }
 
-    $('globalChecked').textContent=
-      Number(data.checked).toLocaleString('uk-UA');
+    $('globalPercent').textContent =
+      Number(data.percent).toLocaleString('uk-UA') + '%';
 
-    $('globalRemaining').textContent=
-      Number(data.remaining).toLocaleString('uk-UA');
+    $('globalProgress').style.width =
+      Math.max(0, Math.min(100, Number(data.percent))) + '%';
 
-    $('globalLabels').textContent=
-      Number(data.labels).toLocaleString('uk-UA');
-
-    $('globalStickers').textContent=
-      Number(data.stickers||0).toLocaleString('uk-UA');
-
-    $('globalPercent').textContent=
-      Number(data.percent).toLocaleString('uk-UA')+'%';
-
-    $('globalProgress').style.width=
-      Math.max(
-        0,
-        Math.min(100,Number(data.percent))
-      )+'%';
-
-    $('statsStatus').textContent=
-      new Date().toLocaleTimeString('uk-UA',{
-        hour:'2-digit',
-        minute:'2-digit'
+    $('statsStatus').textContent =
+      new Date().toLocaleTimeString('uk-UA', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
 
-  }catch(e){
-    $('statsStatus').textContent='Помилка оновлення';
-    console.warn('Статистика:',e);
+  } catch (e) {
+    $('statsStatus').textContent = 'Помилка оновлення';
+    console.warn(e);
   }
 }
 
-function requestStatsRefresh(){
-  statsPending=true;
-  setTimeout(runPendingStats,400);
+function requestStatsRefresh() {
+  statsPending = true;
+  setTimeout(runPendingStats, 400);
 }
 
-function runPendingStats(){
-  if(!statsPending)return;
+function runPendingStats() {
+  if (
+    !statsPending ||
+    busy ||
+    labelBusy ||
+    awaitingConfirmation
+  ) return;
 
-  if(busy || labelBusy ||
-     awaitingConfirmation || serialFormOpen){
-    return;
-  }
-
-  statsPending=false;
+  statsPending = false;
   refreshGlobalStats();
 }
 
-/* ЗАМІНА НАЛІПОК */
+/* ЗАМІНА НАЛІПКИ */
 
-function hideLabel(){
-  labelBarcode='';
-  labelReplace=false;
-  $('labelBox').style.display='none';
-  $('labelMessage').textContent='';
+function hideLabel() {
+  labelBarcode = '';
+  labelReplace = false;
+  $('labelBox').style.display = 'none';
+  $('labelMessage').textContent = '';
 }
 
-function showLabel(code,replace){
-  labelBarcode=code;
-  labelReplace=Boolean(replace);
+function showLabel(code, replace) {
+  labelBarcode = code;
+  labelReplace = Boolean(replace);
 
-  $('labelBox').style.display='block';
-  $('labelCode').textContent=code;
-  $('labelMessage').textContent='';
+  $('labelBox').style.display = 'block';
+  $('labelCode').textContent = code;
+  $('labelMessage').textContent = '';
 
   renderLabel();
 }
 
-function renderLabel(){
-  const button=$('labelAction');
+function renderLabel() {
+  const b = $('labelAction');
 
-  if(labelReplace){
-    $('labelState').textContent=
-      '⚠️ Потребує заміни';
+  $('labelState').textContent = labelReplace
+    ? '⚠️ Потребує заміни'
+    : 'Позначки про заміну немає';
 
-    $('labelState').style.color='#9a5700';
+  $('labelState').style.color = labelReplace
+    ? '#9a5700'
+    : '#188038';
 
-    button.textContent=
-      'Скасувати позначку заміни';
+  b.textContent = labelReplace
+    ? 'Скасувати позначку заміни'
+    : '🏷️ Замінити наліпку';
 
-    button.className='gray';
-  }else{
-    $('labelState').textContent=
-      'Позначки про заміну немає';
-
-    $('labelState').style.color='#188038';
-
-    button.textContent='🏷️ Замінити наліпку';
-    button.className='orange';
-  }
-
-  button.disabled=labelBusy;
+  b.className = labelReplace ? 'gray' : 'orange';
+  b.disabled = labelBusy;
 }
 
-async function toggleLabel(){
-  if(!labelBarcode || labelBusy ||
-     busy || awaitingConfirmation ||
-     serialFormOpen){
-    return;
-  }
+async function toggleLabel() {
+  if (
+    !labelBarcode ||
+    labelBusy ||
+    busy ||
+    awaitingConfirmation
+  ) return;
 
-  const code=labelBarcode;
-  const newValue=!labelReplace;
+  initSound();
 
-  labelBusy=true;
-  busy=true;
+  const code = labelBarcode;
+  const newValue = !labelReplace;
+
+  labelBusy = true;
+  busy = true;
 
   renderLabel();
+  $('labelMessage').textContent = 'Зберігаємо позначку…';
 
-  $('labelMessage').textContent=
-    'Зберігаємо позначку в Google Таблиці…';
-
-  try{
-    const data=await apiRequest(
+  try {
+    const data = await apiRequest(
       'label',
       code,
       null,
-      {replace:newValue}
+      { replace: newValue }
     );
 
-    if(data.status!=='label_updated'){
-      throw Error(
-        data.message||
-        'Не вдалося зберегти позначку'
-      );
+    if (data.status !== 'label_updated') {
+      throw Error(data.message || 'Помилка');
     }
 
-    if(labelBarcode===code){
-      labelReplace=Boolean(data.labelReplace);
-
-      $('labelMessage').textContent=
-        '✓ '+data.message+
-        '. Збережено в Google Таблиці.';
+    if (labelBarcode === code) {
+      labelReplace = Boolean(data.labelReplace);
+      $('labelMessage').textContent = '✓ ' + data.message;
     }
 
-    addHistory(code,'found',data.message);
+    addHistory(code, 'found', data.message);
     requestStatsRefresh();
 
-  }catch(e){
-    $('labelMessage').textContent=
-      'Помилка збереження: '+e.message;
+  } catch (e) {
+    $('labelMessage').textContent =
+      'Помилка: ' + e.message;
 
     sound('error');
 
-  }finally{
-    labelBusy=false;
-    busy=false;
+  } finally {
+    labelBusy = false;
+    busy = false;
     renderLabel();
     runPendingStats();
   }
 }
 
-/* ОБЛАДНАННЯ БЕЗ НАЛІПКИ */
+/* МІСЦЕ ІНВЕНТАРИЗАЦІЇ */
 
-function openSerialForm(){
-  initSound();
+function ensureLocation() {
+  if (sessionLocation) return true;
 
-  if(busy || awaitingConfirmation || labelBusy){
-    show(
-      'Дочекайтеся завершення поточної операції',
-      '#fff0c2'
-    );
-    return;
-  }
+  show(
+    'Спочатку натисніть «Почати сканування» та виберіть корпус і кабінет',
+    '#fff0c2'
+  );
 
-  if(!sessionLocation){
-    show(
-      'Спочатку почніть сканування та виберіть корпус і кабінет',
-      '#fff0c2'
-    );
-    return;
-  }
-
-  serialFormOpen=true;
-
-  $('serialLocation').textContent=
-    'Корпус: '+sessionLocation.building+
-    ' | Кабінет: '+sessionLocation.room;
-
-  $('serialForm').style.display='block';
-  $('serialInput').value='';
-
-  show('Введіть серійний номер обладнання');
-  $('serialInput').focus();
+  return false;
 }
 
-function closeSerialForm(){
-  if(busy)return;
+/* СЕРІЙНИЙ НОМЕР */
 
-  serialFormOpen=false;
-  $('serialForm').style.display='none';
-
-  runPendingStats();
-}
-
-async function saveSerial(){
+async function saveSerial() {
   initSound();
 
-  if(busy || !serialFormOpen ||
-     !sessionLocation){
-    return;
-  }
+  if (
+    busy ||
+    awaitingConfirmation ||
+    labelBusy ||
+    !ensureLocation()
+  ) return;
 
-  const serial=$('serialInput').value.trim();
+  const serial = $('serialInput').value.trim();
 
-  if(!validCode(serial)){
-    show(
-      'Введіть серійний номер обладнання',
-      '#f4cccc'
-    );
+  if (!validCode(serial)) {
+    show('Введіть серійний номер', '#f4cccc');
     $('serialInput').focus();
     return;
   }
 
-  const location=sessionLocation;
-
-  busy=true;
-  $('saveSerialBtn').disabled=true;
+  busy = true;
+  $('saveSerialBtn').disabled = true;
 
   show(
-    'Перевіряємо серійний номер: '+serial,
+    'Перевіряємо серійний номер: ' + serial,
     '#fff3cd'
   );
 
-  try{
-    const data=await apiRequest(
+  try {
+    const data = await apiRequest(
       'serial',
       serial,
-      location
+      sessionLocation
     );
 
-    if(data.status!=='serial_added'){
-      throw Error(
-        data.message||
-        'Не вдалося записати серійний номер'
-      );
+    if (data.status !== 'serial_added') {
+      throw Error(data.message || 'Помилка запису');
     }
 
-    if(data.matched){
+    if (data.matched) {
       show(
-        'ЗНАЙДЕНО: '+data.inventoryNumber,
+        'ЗНАЙДЕНО: ' + data.inventoryNumber,
         '#b7e1cd'
       );
 
-      details.textContent=
-        'Серійний номер: '+serial+
-        ' | Запис K:O, рядок '+data.row;
+      $('details').textContent =
+        'Серійний номер: ' + serial +
+        ' | Запис K:O, рядок ' + data.row;
 
       addHistory(
         serial,
         'serial',
-        'Інвентарний номер: '+
-        data.inventoryNumber
+        'Інвентарний номер: ' + data.inventoryNumber
       );
 
-    }else{
-      show(
-        'ЗБЕРЕЖЕНО: '+serial,
-        '#fff0c2'
-      );
+    } else {
+      show('ЗБЕРЕЖЕНО: ' + serial, '#fff0c2');
 
-      details.textContent=
-        'Інвентарний номер не знайдено. '+
-        'У колонці O записано прочерк. '+
-        'Рядок '+data.row;
+      $('details').textContent =
+        'У колонці O записано прочерк. Рядок ' +
+        data.row;
 
       addHistory(
         serial,
@@ -1172,49 +721,41 @@ async function saveSerial(){
     }
 
     sound('found');
-
-    $('serialInput').value='';
-    serialFormOpen=false;
-    $('serialForm').style.display='none';
-
+    $('serialInput').value = '';
     requestStatsRefresh();
 
-  }catch(e){
-    show(
-      'Помилка: '+e.message,
-      '#f4cccc'
-    );
-
+  } catch (e) {
+    show('Помилка: ' + e.message, '#f4cccc');
     sound('error');
 
-  }finally{
-    busy=false;
-    $('saveSerialBtn').disabled=false;
+  } finally {
+    busy = false;
+    $('saveSerialBtn').disabled = false;
     runPendingStats();
   }
 }
 
 /* РОЗПІЗНАВАННЯ CODE 128 */
 
-async function setupDecoders(){
-  detector=null;
-  reader=null;
+async function setupDecoders() {
+  detector = null;
+  reader = null;
 
-  if('BarcodeDetector' in window){
-    try{
-      const formats=
+  if ('BarcodeDetector' in window) {
+    try {
+      const formats =
         await BarcodeDetector.getSupportedFormats();
 
-      if(formats.includes('code_128')){
-        detector=new BarcodeDetector({
-          formats:['code_128']
+      if (formats.includes('code_128')) {
+        detector = new BarcodeDetector({
+          formats: ['code_128']
         });
       }
-    }catch(e){}
+    } catch (e) {}
   }
 
-  if(window.ZXing){
-    const hints=new Map();
+  if (window.ZXing) {
+    const hints = new Map();
 
     hints.set(
       ZXing.DecodeHintType.POSSIBLE_FORMATS,
@@ -1226,406 +767,501 @@ async function setupDecoders(){
       false
     );
 
-    reader=new ZXing.MultiFormatReader();
+    reader = new ZXing.MultiFormatReader();
     reader.setHints(hints);
   }
 
-  if(!detector && !reader){
-    throw Error('Розпізнавач недоступний');
+  if (!detector && !reader) {
+    throw Error('Розпізнавач штрихкодів недоступний');
   }
 }
 
-async function openCamera(){
-  const modes=[
+/* КАМЕРА */
+
+async function openCamera() {
+  const w = Number($('resolution').value);
+  const h = w === 1920 ? 1080 : w === 1280 ? 720 : 480;
+
+  const modes = [
     {
-      facingMode:{ideal:'environment'},
-      width:{ideal:1920},
-      height:{ideal:1080}
+      facingMode: { ideal: 'environment' },
+      width: { ideal: w },
+      height: { ideal: h }
     },
     {
-      facingMode:{ideal:'environment'},
-      width:{ideal:1280},
-      height:{ideal:720}
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
     },
-    {facingMode:{ideal:'environment'}},
+    {
+      facingMode: { ideal: 'environment' }
+    },
     true
   ];
 
   let error;
 
-  for(const mode of modes){
-    try{
+  for (const mode of modes) {
+    try {
       return await navigator.mediaDevices.getUserMedia({
-        video:mode,
-        audio:false
+        video: mode,
+        audio: false
       });
-    }catch(e){
-      error=e;
 
-      if(e.name==='NotAllowedError' ||
-         e.name==='SecurityError'){
+    } catch (e) {
+      error = e;
+
+      if (
+        ['NotAllowedError', 'SecurityError']
+          .includes(e.name)
+      ) {
         throw e;
       }
     }
   }
 
-  throw error||Error('Камера недоступна');
+  throw error || Error('Камера недоступна');
 }
 
-async function configureCamera(track){
-  try{
-    const caps=track.getCapabilities?.()||{};
+async function configureCamera(track) {
+  try {
+    const caps = track.getCapabilities?.() || {};
 
-    if(caps.focusMode?.includes('continuous')){
-      try{
+    if (caps.focusMode?.includes('continuous')) {
+      try {
         await track.applyConstraints({
-          advanced:[{focusMode:'continuous'}]
+          advanced: [{ focusMode: 'continuous' }]
         });
-      }catch(e){}
+      } catch (e) {}
     }
 
-    if(caps.zoom &&
-       Number.isFinite(caps.zoom.min) &&
-       Number.isFinite(caps.zoom.max)){
-      const zoom=Math.max(
+    if (
+      caps.zoom &&
+      Number.isFinite(caps.zoom.min) &&
+      Number.isFinite(caps.zoom.max)
+    ) {
+      const zoom = Math.max(
         caps.zoom.min,
-        Math.min(1,caps.zoom.max)
+        Math.min(1, caps.zoom.max)
       );
 
-      try{
+      try {
         await track.applyConstraints({
-          advanced:[{zoom}]
+          advanced: [{ zoom }]
         });
-      }catch(e){}
+      } catch (e) {}
     }
-  }catch(e){}
+
+  } catch (e) {}
 }
 
-/* ВИБІР МІСЦЯ */
+/* ЛІХТАРИК */
 
-function requestLocation(){
-  if(scanning || busy || awaitingConfirmation){
+function updateTorchUI() {
+  if (!torchAvailable) {
+    $('torchBtn').style.display = 'none';
+
+    $('torchStatus').textContent = scanning
+      ? 'Ліхтарик недоступний у цьому браузері'
+      : '';
+
     return;
   }
 
-  $('locationForm').style.display='block';
-  $('startBtn').disabled=true;
+  $('torchBtn').style.display = 'inline-block';
+
+  $('torchBtn').textContent =
+    '🔦 Ліхтарик: ' +
+    (torchEnabled ? 'увімкнено' : 'вимкнено');
+
+  $('torchBtn').className =
+    torchEnabled ? 'orange' : 'gray';
+
+  $('torchStatus').textContent = '';
+}
+
+async function setTorch(on) {
+  const track = stream?.getVideoTracks()?.[0];
+
+  if (!track || track.readyState !== 'live') {
+    return false;
+  }
+
+  try {
+    await track.applyConstraints({
+      advanced: [{ torch: Boolean(on) }]
+    });
+
+    torchEnabled = Boolean(on);
+    updateTorchUI();
+
+    return true;
+
+  } catch (e) {
+    torchEnabled = false;
+    updateTorchUI();
+
+    return false;
+  }
+}
+
+async function setupTorch() {
+  torchEnabled = false;
+  torchAvailable = false;
+
+  const track = stream?.getVideoTracks()?.[0];
+
+  try {
+    torchAvailable =
+      track?.getCapabilities?.().torch === true;
+  } catch (e) {}
+
+  updateTorchUI();
+
+  if (torchAvailable && $('autoTorch').checked) {
+    await setTorch(true);
+  }
+}
+
+async function toggleTorch() {
+  if (!torchAvailable) return;
+
+  await setTorch(!torchEnabled);
+}
+
+/* ВИБІР КОРПУСУ І КАБІНЕТУ */
+
+function requestLocation() {
+  if (scanning || busy || awaitingConfirmation) return;
+
+  initSound();
+
+  $('locationForm').style.display = 'block';
+  $('startBtn').disabled = true;
 
   show('Введіть корпус і кабінет');
   $('buildingInput').focus();
 }
 
-function cancelLocation(){
-  $('locationForm').style.display='none';
-  $('startBtn').disabled=false;
+function cancelLocation() {
+  $('locationForm').style.display = 'none';
+  $('startBtn').disabled = false;
 
   show('Введення місця скасовано');
 }
 
-function confirmLocation(){
-  const building=$('buildingInput').value.trim();
-  const room=$('roomInput').value.trim();
+function confirmLocation() {
+  const building = $('buildingInput').value.trim();
+  const room = $('roomInput').value.trim();
 
-  if(!building || !room){
-    show('Заповніть корпус і кабінет','#f4cccc');
+  if (!building || !room) {
+    show('Заповніть корпус і кабінет', '#f4cccc');
     return;
   }
 
-  if(building.length>100 || room.length>100){
-    show('Занадто довге значення','#f4cccc');
-    return;
-  }
-
-  sessionLocation=Object.freeze({
+  sessionLocation = Object.freeze({
     building,
     room
   });
 
-  $('locationForm').style.display='none';
+  $('locationForm').style.display = 'none';
 
-  $('activeLocation').textContent=
-    'Корпус: '+building+
-    ' | Кабінет: '+room;
+  $('activeLocation').textContent =
+    'Корпус: ' + building +
+    ' | Кабінет: ' + room;
 
-  $('activeLocation').style.display='block';
+  $('activeLocation').style.display = 'block';
 
   startScanner();
 }
 
-/* ЗАПУСК КАМЕРИ */
+/* ЗАПУСК СКАНЕРА */
 
-async function startScanner(){
+async function startScanner() {
   initSound();
 
-  if(!sessionLocation){
+  if (!sessionLocation) {
     requestLocation();
     return;
   }
 
-  if(scanning)return;
+  if (scanning) return;
 
-  const current=++token;
+  const current = ++token;
 
-  scanning=true;
-  busy=false;
-  awaitingConfirmation=false;
+  scanning = true;
+  awaitingConfirmation = false;
+  $('startBtn').disabled = true;
 
-  $('startBtn').disabled=true;
-
-  try{
+  try {
     show('Запуск камери...');
 
-    const opened=await openCamera();
+    const opened = await openCamera();
 
-    if(!scanning || current!==token){
-      opened.getTracks().forEach(t=>t.stop());
+    if (!scanning || current !== token) {
+      opened.getTracks().forEach(t => t.stop());
       return;
     }
 
-    stream=opened;
-    video.srcObject=stream;
+    stream = opened;
+    video.srcObject = stream;
 
     await video.play();
 
-    if(!scanning || current!==token){
-      return;
-    }
+    if (!scanning || current !== token) return;
 
     await configureCamera(
       stream.getVideoTracks()[0]
     );
 
+    await setupTorch();
     await setupDecoders();
 
-    if(!scanning || current!==token){
-      return;
-    }
+    if (!scanning || current !== token) return;
 
-    frameCount=0;
-    startedAt=performance.now();
+    frameCount = 0;
+    startedAt = performance.now();
 
-    candidate='';
-    candidateCount=0;
-    lastHandled='';
-    lastSeenAt=0;
+    candidate = '';
+    candidateCount = 0;
+    lastHandled = '';
+    lastSeenAt = 0;
 
     show('Наведіть штрихкод у рамку');
 
-    details.textContent=
+    $('details').textContent =
       'Камера працює безперервно';
 
-    schedule(current,0);
+    schedule(current, 0);
 
-  }catch(e){
-    stopScanner();
+  } catch (e) {
+    forceStopScanner();
 
-    show('Помилка: '+e.message,'#f4cccc');
+    show('Помилка: ' + e.message, '#f4cccc');
     sound('error');
   }
 }
 
-function schedule(current,delay=40){
-  if(!scanning || current!==token)return;
-
-  timer=setTimeout(
-    ()=>scanFrame(current),
-    delay
-  );
+function schedule(current, delay = 40) {
+  if (scanning && current === token) {
+    timer = setTimeout(
+      () => scanFrame(current),
+      delay
+    );
+  }
 }
 
-function drawRegion(mode){
-  const w=video.videoWidth;
-  const h=video.videoHeight;
+function drawRegion(mode) {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
 
-  if(!w || !h)return false;
+  if (!w || !h) return false;
 
-  const wide=mode==='wide';
+  const wide = mode === 'wide';
 
-  const sx=Math.floor(w*(wide?.02:.05));
-  const sy=Math.floor(h*(wide?.25:.38));
-  const sw=Math.floor(w*(wide?.96:.90));
-  const sh=Math.floor(h*(wide?.50:.24));
+  const sx = Math.floor(w * (wide ? .02 : .05));
+  const sy = Math.floor(h * (wide ? .25 : .38));
+  const sw = Math.floor(w * (wide ? .96 : .90));
+  const sh = Math.floor(h * (wide ? .50 : .24));
 
-  const maxWidth=wide?1600:1280;
-  const scale=Math.min(1,maxWidth/sw);
-
-  canvas.width=Math.max(
-    1,Math.round(sw*scale)
+  const scale = Math.min(
+    1,
+    (wide ? 1600 : 1280) / sw
   );
 
-  canvas.height=Math.max(
-    1,Math.round(sh*scale)
+  canvas.width = Math.max(
+    1,
+    Math.round(sw * scale)
+  );
+
+  canvas.height = Math.max(
+    1,
+    Math.round(sh * scale)
   );
 
   ctx.drawImage(
     video,
-    sx,sy,sw,sh,
-    0,0,canvas.width,canvas.height
+    sx, sy, sw, sh,
+    0, 0,
+    canvas.width,
+    canvas.height
   );
 
   return true;
 }
 
-function decodeZXing(){
-  if(!reader)return '';
+function decodeZXing() {
+  if (!reader) return '';
 
-  try{
-    const source=
+  try {
+    const source =
       new ZXing.HTMLCanvasElementLuminanceSource(
         canvas
       );
 
-    const bitmap=
-      new ZXing.BinaryBitmap(
-        new ZXing.HybridBinarizer(source)
-      );
+    const bitmap = new ZXing.BinaryBitmap(
+      new ZXing.HybridBinarizer(source)
+    );
 
-    const result=reader.decode(bitmap);
+    const r = reader.decode(bitmap);
 
-    return result
-      ?String(result.getText()).trim()
-      :'';
+    return r
+      ? String(r.getText()).trim()
+      : '';
 
-  }catch(e){
+  } catch (e) {
     return '';
-  }finally{
+
+  } finally {
     reader.reset();
   }
 }
 
-async function scanFrame(current){
-  if(!scanning || current!==token)return;
+async function scanFrame(current) {
+  if (!scanning || current !== token) return;
 
-  if(busy || awaitingConfirmation || serialFormOpen){
-    schedule(current,100);
+  if (busy || awaitingConfirmation) {
+    schedule(current, 100);
     return;
   }
 
-  if(video.readyState<2){
-    schedule(current,100);
+  if (video.readyState < 2) {
+    schedule(current, 100);
     return;
   }
 
-  try{
+  try {
     frameCount++;
 
-    const elapsed=performance.now()-startedAt;
+    const elapsed =
+      performance.now() - startedAt;
 
-    const mode=
-      elapsed>2500 && frameCount%3===0
-        ?'wide':'fast';
+    const mode =
+      elapsed > 2500 && frameCount % 3 === 0
+        ? 'wide'
+        : 'fast';
 
-    if(!drawRegion(mode))return;
+    if (!drawRegion(mode)) return;
 
-    let code='';
+    let code = '';
 
-    if(detector){
-      try{
-        const found=await detector.detect(canvas);
+    if (detector) {
+      try {
+        const found =
+          await detector.detect(canvas);
 
-        if(current!==token || !scanning)return;
+        if (current !== token || !scanning) return;
 
-        const item=found.find(
-          x=>x.format==='code_128'
+        const item = found.find(
+          x => x.format === 'code_128'
         );
 
-        if(item){
-          code=String(item.rawValue||'').trim();
+        if (item) {
+          code = String(item.rawValue || '').trim();
         }
-      }catch(e){}
+
+      } catch (e) {}
     }
 
-    if(!code && reader &&
-       (!detector ||
-       (elapsed>1200 && frameCount%3===0))){
-      code=decodeZXing();
+    if (
+      !code &&
+      reader &&
+      (
+        !detector ||
+        (elapsed > 1200 && frameCount % 3 === 0)
+      )
+    ) {
+      code = decodeZXing();
     }
 
-    const now=performance.now();
+    const now = performance.now();
 
-    if(validCode(code)){
-      lastSeenAt=now;
+    if (validCode(code)) {
+      lastSeenAt = now;
 
-      if(code===lastHandled){
-        candidate='';
-        candidateCount=0;
+      if (code === lastHandled) {
+        candidate = '';
+        candidateCount = 0;
         return;
       }
 
-      if(code===candidate &&
-         now-candidateTime<2000){
+      if (
+        code === candidate &&
+        now - candidateTime < 2000
+      ) {
         candidateCount++;
-      }else{
-        candidate=code;
-        candidateCount=1;
+      } else {
+        candidate = code;
+        candidateCount = 1;
       }
 
-      candidateTime=now;
+      candidateTime = now;
 
-      if(candidateCount>=2){
-        candidate='';
-        candidateCount=0;
+      if (candidateCount >= 2) {
+        candidate = '';
+        candidateCount = 0;
 
-        lastHandled=code;
-        busy=true;
+        lastHandled = code;
+        busy = true;
 
         sound('scanned');
         processBarcode(code);
       }
 
-    }else{
-      candidate='';
-      candidateCount=0;
+    } else {
+      candidate = '';
+      candidateCount = 0;
 
-      if(now-lastSeenAt>1500){
-        lastHandled='';
+      if (now - lastSeenAt > 1500) {
+        lastHandled = '';
       }
     }
 
-  }catch(e){
+  } catch (e) {
     console.warn(e);
-  }finally{
-    if(scanning && current===token){
-      schedule(current,40);
+
+  } finally {
+    if (scanning && current === token) {
+      schedule(current, 40);
     }
   }
 }
 
-/* ПЕРЕВІРКА ІНВЕНТАРНОГО НОМЕРА */
+/* ПЕРЕВІРКА ШТРИХКОДУ */
 
-async function processBarcode(code){
-  const started=performance.now();
-  const location=sessionLocation;
+async function processBarcode(code) {
+  const started = performance.now();
+  const location = sessionLocation;
 
   hideLabel();
+  show('Перевіряємо: ' + code, '#fff3cd');
 
-  show('Перевіряємо: '+code,'#fff3cd');
-
-  try{
-    const data=await apiRequest(
-      'scan',code,location
+  try {
+    const data = await apiRequest(
+      'scan',
+      code,
+      location
     );
 
-    if(!scanning)return;
+    const seconds = (
+      (performance.now() - started) / 1000
+    ).toFixed(1);
 
-    const seconds=
-      ((performance.now()-started)/1000).toFixed(1);
+    if (data.status === 'found') {
+      show('ЗНАЙДЕНО: ' + code, '#b7e1cd');
 
-    if(data.status==='found'){
-      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
+      $('details').textContent =
+        'Рядок ' + data.row +
+        ' | Запит: ' + seconds + ' с';
 
-      details.textContent=
-        'Рядок '+data.row+
-        ' | Запит: '+seconds+' с';
-
-      showLabel(code,data.labelReplace);
+      showLabel(code, data.labelReplace);
 
       addHistory(
         code,
         'found',
-        'Знайдено | Корпус '+
-        location.building+
-        ', каб. '+location.room
+        'Знайдено | Корпус ' +
+        location.building +
+        ', каб. ' + location.room
       );
 
       sound('found');
@@ -1633,84 +1269,88 @@ async function processBarcode(code){
 
       requestStatsRefresh();
 
-    }else if(data.status==='not_found'){
-      awaitingConfirmation=true;
-      pendingBarcode=code;
+    } else if (data.status === 'not_found') {
+      awaitingConfirmation = true;
+      pendingBarcode = code;
 
-      $('confirmCode').textContent=code;
-      $('confirmBox').style.display='block';
+      $('confirmCode').textContent = code;
+      $('confirmBox').style.display = 'block';
 
-      show('НЕ ЗНАЙДЕНО: '+code,'#fff0c2');
+      show('НЕ ЗНАЙДЕНО: ' + code, '#fff0c2');
 
-      details.textContent=
+      $('details').textContent =
         'Потрібне підтвердження додавання';
 
       sound('not_found');
 
-    }else{
+    } else {
       throw Error(
-        data.message||
+        data.message ||
         'Невідома відповідь сервера'
       );
     }
 
-  }catch(e){
-    show('Помилка: '+e.message,'#f4cccc');
-    addHistory(code,'error',e.message);
+  } catch (e) {
+    show('Помилка: ' + e.message, '#f4cccc');
+    addHistory(code, 'error', e.message);
     sound('error');
-  }finally{
-    busy=false;
+
+  } finally {
+    busy = false;
     runPendingStats();
   }
 }
 
-/* ДОДАВАННЯ ІНВЕНТАРНОГО НОМЕРА */
+/* ДОДАВАННЯ НОВОГО НОМЕРА */
 
-async function confirmAdd(){
+async function confirmAdd() {
   initSound();
 
-  if(!awaitingConfirmation || busy)return;
+  if (!awaitingConfirmation || busy) return;
 
-  const code=pendingBarcode;
-  const location=sessionLocation;
+  const code = pendingBarcode;
+  const location = sessionLocation;
 
-  busy=true;
+  busy = true;
 
-  show('Додаємо номер: '+code,'#fff3cd');
+  show('Додаємо номер: ' + code, '#fff3cd');
 
-  try{
-    const data=await apiRequest(
-      'add',code,location
+  try {
+    const data = await apiRequest(
+      'add',
+      code,
+      location
     );
 
-    if(data.status==='added'){
-      show('ДОДАНО: '+code,'#fff0c2');
+    if (data.status === 'added') {
+      show('ДОДАНО: ' + code, '#fff0c2');
 
-      details.textContent=
-        'Новий номер у рядку '+data.row;
+      $('details').textContent =
+        'Новий номер у рядку ' + data.row;
 
-      showLabel(code,data.labelReplace);
+      showLabel(code, data.labelReplace);
 
       addHistory(
         code,
         'added',
-        'Додано | Корпус '+
-        location.building+
-        ', каб. '+location.room
+        'Додано | Корпус ' +
+        location.building +
+        ', каб. ' + location.room
       );
 
       sound('found');
 
-    }else if(data.status==='found'){
-      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
+    } else if (data.status === 'found') {
+      show('ЗНАЙДЕНО: ' + code, '#b7e1cd');
 
-      showLabel(code,data.labelReplace);
-      addHistory(code,'found','Знайдено');
+      showLabel(code, data.labelReplace);
+      addHistory(code, 'found', 'Знайдено');
+
       sound('found');
 
-    }else{
+    } else {
       throw Error(
-        data.message||
+        data.message ||
         'Не вдалося додати номер'
       );
     }
@@ -1718,58 +1358,54 @@ async function confirmAdd(){
     closeConfirmation();
     requestStatsRefresh();
 
-  }catch(e){
+  } catch (e) {
     show(
-      'Помилка додавання: '+e.message,
+      'Помилка додавання: ' + e.message,
       '#f4cccc'
     );
+
     sound('error');
-  }finally{
-    busy=false;
+
+  } finally {
+    busy = false;
     runPendingStats();
   }
 }
 
-function closeConfirmation(){
-  awaitingConfirmation=false;
-  pendingBarcode='';
-  $('confirmBox').style.display='none';
+function closeConfirmation() {
+  awaitingConfirmation = false;
+  pendingBarcode = '';
+  $('confirmBox').style.display = 'none';
 }
 
-function cancelAdd(){
-  if(busy)return;
+function cancelAdd() {
+  if (busy) return;
 
-  const code=pendingBarcode;
+  const code = pendingBarcode;
+
   closeConfirmation();
 
-  show('Додавання скасовано: '+code);
+  show('Додавання скасовано: ' + code);
+  addHistory(code, 'error', 'Скасовано');
 
-  addHistory(code,'error','Скасовано');
   runPendingStats();
 }
 
-/* РУЧНЕ ВВЕДЕННЯ */
+/* РУЧНЕ ВВЕДЕННЯ ІНВЕНТАРНОГО НОМЕРА */
 
-function manualScan(){
+function manualScan() {
   initSound();
 
-  if(busy || awaitingConfirmation ||
-     labelBusy || serialFormOpen){
+  if (busy || awaitingConfirmation || labelBusy) {
     return;
   }
 
-  if(!scanning || !sessionLocation){
-    show(
-      'Спочатку почніть сканування та вкажіть місце',
-      '#fff0c2'
-    );
-    return;
-  }
+  if (!ensureLocation()) return;
 
-  const input=$('manualCode');
-  const code=input.value.trim();
+  const input = $('manualCode');
+  const code = input.value.trim();
 
-  if(!validCode(code)){
+  if (!validCode(code)) {
     show(
       'Введіть інвентарний номер',
       '#f4cccc'
@@ -1777,20 +1413,46 @@ function manualScan(){
     return;
   }
 
-  lastHandled=code;
-  busy=true;
+  lastHandled = code;
+  busy = true;
 
-  input.value='';
+  input.value = '';
 
   sound('scanned');
   processBarcode(code);
 }
 
-/* ЗУПИНКА */
+/* ЗУПИНКА СКАНЕРА */
 
-function stopScanner(){
-  if(busy || awaitingConfirmation ||
-     labelBusy || serialFormOpen){
+function forceStopScanner() {
+  scanning = false;
+  token++;
+
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  video.srcObject = null;
+
+  detector = null;
+  reader = null;
+
+  torchEnabled = false;
+  torchAvailable = false;
+
+  updateTorchUI();
+
+  $('startBtn').disabled = false;
+}
+
+function stopScanner() {
+  if (busy || awaitingConfirmation || labelBusy) {
     show(
       'Завершіть поточну операцію',
       '#fff0c2'
@@ -1798,55 +1460,46 @@ function stopScanner(){
     return;
   }
 
-  sessionLocation=null;
+  forceStopScanner();
 
-  $('activeLocation').style.display='none';
-  $('locationForm').style.display='none';
+  sessionLocation = null;
 
-  scanning=false;
-  token++;
-
-  if(timer){
-    clearTimeout(timer);
-    timer=null;
-  }
-
-  if(stream){
-    stream.getTracks().forEach(
-      track=>track.stop()
-    );
-    stream=null;
-  }
-
-  video.srcObject=null;
-
-  detector=null;
-  reader=null;
-
-  $('startBtn').disabled=false;
+  $('activeLocation').style.display = 'none';
+  $('locationForm').style.display = 'none';
 
   hideLabel();
+
   show('Сканування зупинено');
 }
 
-window.addEventListener('pagehide',()=>{
-  if(stream){
-    stream.getTracks().forEach(t=>t.stop());
+/* ОБРОБНИКИ ПОДІЙ */
+
+window.addEventListener('pagehide', () => {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
   }
 });
 
-/* ЗАПУСК */
+$('manualCode').addEventListener('keydown', e => {
+  if (e.key === 'Enter') manualScan();
+});
+
+$('serialInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveSerial();
+});
+
+/* ПОЧАТКОВЕ ОНОВЛЕННЯ СТАТИСТИКИ */
 
 refreshGlobalStats();
 
-setInterval(()=>{
-  if(!document.hidden){
+setInterval(() => {
+  if (!document.hidden) {
     refreshGlobalStats();
   }
-},10000);
+}, 10000);
 
-document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden){
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
     refreshGlobalStats();
   }
 });
