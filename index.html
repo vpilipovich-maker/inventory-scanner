@@ -4,8 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Держмитслужба — Інвентаризація 2026 V12.6.11</title>
+<title>Держмитслужба — Інвентаризація 2026 V12.6.12</title>
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:10px;font-family:Arial,sans-serif;text-align:center;background:#f5f6f8;color:#222}
@@ -71,6 +72,7 @@ button{font-size:15px}
 }
 </style>
 </head>
+
 <body>
 
 <h1>Держмитслужба</h1>
@@ -183,6 +185,8 @@ const cameraBox = document.querySelector('.camera-box');
 let stream = null;
 let detector = null;
 let reader = null;
+let readerHard = null;
+
 let scanning = false;
 let busy = false;
 let awaitingConfirmation = false;
@@ -741,11 +745,12 @@ async function saveSerial() {
   }
 }
 
-/* РОЗПІЗНАВАННЯ CODE 128 */
+/* РОЗПІЗНАВАЧІ CODE 128 */
 
 async function setupDecoders() {
   detector = null;
   reader = null;
+  readerHard = null;
 
   if ('BarcodeDetector' in window) {
     try {
@@ -757,24 +762,37 @@ async function setupDecoders() {
           formats: ['code_128']
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('BarcodeDetector:', e);
+    }
   }
 
   if (window.ZXing) {
-    const hints = new Map();
+    const formats = [
+      ZXing.BarcodeFormat.CODE_128
+    ];
 
-    hints.set(
+    const fastHints = new Map();
+    fastHints.set(
       ZXing.DecodeHintType.POSSIBLE_FORMATS,
-      [ZXing.BarcodeFormat.CODE_128]
-    );
-
-    hints.set(
-      ZXing.DecodeHintType.TRY_HARDER,
-      false
+      formats
     );
 
     reader = new ZXing.MultiFormatReader();
-    reader.setHints(hints);
+    reader.setHints(fastHints);
+
+    const hardHints = new Map();
+    hardHints.set(
+      ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      formats
+    );
+    hardHints.set(
+      ZXing.DecodeHintType.TRY_HARDER,
+      true
+    );
+
+    readerHard = new ZXing.MultiFormatReader();
+    readerHard.setHints(hardHints);
   }
 
   if (!detector && !reader) {
@@ -984,18 +1002,7 @@ function schedule(current, delay = 40) {
   }
 }
 
-/*
-  V12.6.11
-  ОСНОВНЕ РОЗПІЗНАВАННЯ + ПОВОРОТ КАДРУ
-
-  0°   — швидка перевірка
-  45°  — додаткова
-  -45° — додаткова
-  90°  — додаткова
-
-  Додаткові кути перевіряються лише тоді,
-  коли звичайне розпізнавання не дало результату.
-*/
+/* ОСНОВНА ОБЛАСТЬ РОЗПІЗНАВАННЯ */
 
 function drawRegion(mode, rotation = 0) {
   const w = video.videoWidth;
@@ -1037,12 +1044,6 @@ function drawRegion(mode, rotation = 0) {
 
     return true;
   }
-
-  /*
-    Для повороту беремо більшу центральну область,
-    щоб діагональний штрихкод не обрізався.
-    Малюємо повернутий кадр на canvas.
-  */
 
   const angle = rotation * Math.PI / 180;
   const cos = Math.abs(Math.cos(angle));
@@ -1088,10 +1089,50 @@ function drawRegion(mode, rotation = 0) {
   return true;
 }
 
+/* V12.6.12: ОБЛАСТЬ ДЛЯ МАЛИХ НАЛІПОК */
+
+function drawSmallBarcodeRegion() {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+
+  if (!w || !h) return false;
+
+  const sx = Math.floor(w * 0.03);
+  const sy = Math.floor(h * 0.31);
+  const sw = Math.floor(w * 0.94);
+  const sh = Math.floor(h * 0.38);
+
+  // Не збільшуємо штучно: зберігаємо
+  // максимальну доступну деталізацію.
+  const scale = Math.min(1, 1920 / sw);
+
+  canvas.width = Math.max(
+    1,
+    Math.round(sw * scale)
+  );
+
+  canvas.height = Math.max(
+    1,
+    Math.round(sh * scale)
+  );
+
+  ctx.drawImage(
+    video,
+    sx, sy, sw, sh,
+    0, 0,
+    canvas.width,
+    canvas.height
+  );
+
+  return true;
+}
+
 /* ZXING */
 
-function decodeZXing() {
-  if (!reader) return '';
+function decodeZXing(hard = false) {
+  const decoder = hard ? readerHard : reader;
+
+  if (!decoder) return '';
 
   try {
     const source =
@@ -1103,31 +1144,26 @@ function decodeZXing() {
       new ZXing.HybridBinarizer(source)
     );
 
-    const r = reader.decode(bitmap);
+    const result = decoder.decode(bitmap);
 
-    return r
-      ? String(r.getText()).trim()
+    return result
+      ? String(result.getText()).trim()
       : '';
 
   } catch (e) {
     return '';
 
   } finally {
-    reader.reset();
+    decoder.reset();
   }
 }
 
-/* КУТ ЗА КООРДИНАТАМИ ШТРИХКОДУ */
+/* КУТ ШТРИХКОДУ */
 
 function barcodeAngle(item) {
   const p = item?.cornerPoints;
 
   if (!p || p.length < 4) return null;
-
-  /*
-    Визначаємо напрямок довшої сторони
-    прямокутника штрихкоду.
-  */
 
   const edges = [
     [p[0], p[1]],
@@ -1151,7 +1187,8 @@ function barcodeAngle(item) {
 
 async function detectCurrentCanvas(
   current,
-  allowZXing = true
+  allowZXing = true,
+  hard = false
 ) {
   let code = '';
   let angle = null;
@@ -1176,14 +1213,14 @@ async function detectCurrentCanvas(
     } catch (e) {}
   }
 
-  if (!code && reader && allowZXing) {
-    code = decodeZXing();
+  if (!code && allowZXing) {
+    code = decodeZXing(hard);
   }
 
   return { code, angle };
 }
 
-/* БЕЗПЕРЕРВНЕ СКАНУВАННЯ */
+/* V12.6.12: АДАПТИВНЕ СКАНУВАННЯ */
 
 async function scanFrame(current) {
   if (!scanning || current !== token) return;
@@ -1210,6 +1247,7 @@ async function scanFrame(current) {
 
     if (!drawRegion(mode, 0)) return;
 
+    // 1. Швидке розпізнавання.
     let result = await detectCurrentCanvas(
       current,
       !detector ||
@@ -1218,37 +1256,53 @@ async function scanFrame(current) {
 
     if (current !== token || !scanning) return;
 
-    /*
-      Якщо звичайна перевірка не спрацювала,
-      перевіряємо один додатковий кут.
-      Це зменшує навантаження на телефон.
-    */
+    // 2. Поглиблений пошук малих штрихкодів.
+    if (
+      !validCode(result.code) &&
+      elapsed > 700 &&
+      frameCount % 2 === 0
+    ) {
+      if (drawSmallBarcodeRegion()) {
+        result = await detectCurrentCanvas(
+          current,
+          true,
+          true
+        );
+      }
+    }
 
+    if (current !== token || !scanning) return;
+
+    // 3. Додаткові кути: +45°, -45°, 90°.
     if (
       !validCode(result.code) &&
       elapsed > 900 &&
-      frameCount % 2 === 0
+      frameCount % 3 === 0
     ) {
       const angles = [45, -45, 90];
 
       const index =
-        Math.floor(frameCount / 2) % angles.length;
+        Math.floor(frameCount / 3) % angles.length;
 
       const rotation = angles[index];
 
       if (drawRegion('wide', rotation)) {
-        const rotatedResult =
-          await detectCurrentCanvas(current, true);
+        const rotated =
+          await detectCurrentCanvas(
+            current,
+            true,
+            true
+          );
 
         if (current !== token || !scanning) return;
 
-        if (validCode(rotatedResult.code)) {
+        if (validCode(rotated.code)) {
           result = {
-            code: rotatedResult.code,
-            angle: rotatedResult.angle === null
+            code: rotated.code,
+            angle: rotated.angle === null
               ? rotation
               : normalizeAngle(
-                  rotatedResult.angle + rotation
+                  rotated.angle + rotation
                 )
           };
         }
@@ -1256,10 +1310,10 @@ async function scanFrame(current) {
     }
 
     const code = result.code;
-    const now = performance.now();
+    const detectedAt = performance.now();
 
     if (validCode(code)) {
-      lastSeenAt = now;
+      lastSeenAt = detectedAt;
 
       if (result.angle !== null) {
         setFrameAngle(result.angle);
@@ -1273,7 +1327,7 @@ async function scanFrame(current) {
 
       if (
         code === candidate &&
-        now - candidateTime < 2000
+        detectedAt - candidateTime < 2000
       ) {
         candidateCount++;
       } else {
@@ -1281,7 +1335,7 @@ async function scanFrame(current) {
         candidateCount = 1;
       }
 
-      candidateTime = now;
+      candidateTime = detectedAt;
 
       if (candidateCount >= 2) {
         candidate = '';
@@ -1298,18 +1352,13 @@ async function scanFrame(current) {
       candidate = '';
       candidateCount = 0;
 
-      if (now - lastSeenAt > 1500) {
+      if (detectedAt - lastSeenAt > 1500) {
         lastHandled = '';
       }
 
-      /*
-        Якщо давно немає штрихкоду,
-        повертаємо рамку горизонтально.
-      */
-
       if (
         frameAngleUpdatedAt &&
-        now - frameAngleUpdatedAt > 2200
+        detectedAt - frameAngleUpdatedAt > 2200
       ) {
         resetFrameAngle();
       }
@@ -1489,7 +1538,7 @@ function cancelAdd() {
   runPendingStats();
 }
 
-/* РУЧНЕ ВВЕДЕННЯ ІНВЕНТАРНОГО НОМЕРА */
+/* РУЧНЕ ВВЕДЕННЯ */
 
 function manualScan() {
   initSound();
@@ -1542,6 +1591,7 @@ function forceStopScanner() {
 
   detector = null;
   reader = null;
+  readerHard = null;
 
   $('startBtn').disabled = false;
 }
@@ -1583,7 +1633,7 @@ $('serialInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') saveSerial();
 });
 
-/* ПОЧАТКОВЕ ОНОВЛЕННЯ СТАТИСТИКИ */
+/* СТАТИСТИКА */
 
 refreshGlobalStats();
 
