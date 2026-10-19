@@ -3,8 +3,8 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Держмитслужба — Інвентаризація 2026 V12.6.3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Держмитслужба — Інвентаризація 2026</title>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 
@@ -19,8 +19,9 @@ body{
   background:#f5f6f8;
   color:#222;
 }
+
 h2{margin:6px 0;font-size:25px}
-h3{margin:7px 0;font-size:20px}
+h3{margin:8px 0;font-size:19px}
 p{color:#555}
 
 button{
@@ -33,20 +34,13 @@ button{
   background:#1769aa;
   cursor:pointer;
 }
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
+
+button:disabled{opacity:.5;cursor:not-allowed}
 .gray{background:#666}
 .red{background:#b3261e}
 .green{background:#188038}
-.orange{
-  background:#e67e00;
-  color:white;
-  font-weight:bold;
-}
-
-/* КОМПАКТНА ЗАГАЛЬНА СТАТИСТИКА */
+.orange{background:#e67e00;font-weight:bold}
+.purple{background:#6941a5}
 
 .global-stats{
   max-width:550px;
@@ -69,14 +63,13 @@ button:disabled{
 .global-heading h3{
   margin:0;
   font-size:17px;
-  line-height:1.2;
 }
 
 #globalPercent{
-  flex-shrink:0;
   font-size:15px;
   font-weight:bold;
   color:#188038;
+  flex-shrink:0;
 }
 
 .global-grid{
@@ -118,28 +111,89 @@ button:disabled{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:8px;
+  flex-wrap:wrap;
+  gap:6px;
   margin-top:9px;
-  text-align:left;
-}
-
-.label-count{
-  font-size:13px;
-  font-weight:normal;
-}
-
-#globalLabels{
-  font-weight:bold;
+  font-size:12px;
 }
 
 #statsStatus{
-  font-size:11px;
   color:#666;
-  text-align:right;
-  white-space:nowrap;
+  font-size:11px;
 }
 
-/* КАМЕРА */
+.hint{
+  max-width:550px;
+  margin:8px auto;
+  padding:8px;
+  border-radius:9px;
+  background:#e8f2ff;
+  color:#17578c;
+  font-size:13px;
+}
+
+.sound-controls{
+  max-width:550px;
+  margin:8px auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.sound-controls label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:15px;
+}
+
+.sound-controls input{
+  width:19px;
+  height:19px;
+}
+
+.location-box,.serial-box{
+  max-width:550px;
+  margin:12px auto;
+  padding:16px;
+  background:white;
+  border:1px solid #ccd4dc;
+  border-radius:12px;
+  text-align:left;
+}
+
+.location-box label,.serial-box label{
+  display:block;
+  margin:10px 0 5px;
+  font-weight:bold;
+}
+
+.location-box input,.serial-box input{
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  border:1px solid #aaa;
+  border-radius:9px;
+}
+
+.location-box button,.serial-box button{
+  width:100%;
+  margin:12px 0 0;
+}
+
+#locationForm,#serialForm{display:none}
+
+#activeLocation{
+  max-width:550px;
+  margin:10px auto;
+  padding:12px;
+  background:#dff2e4;
+  border-radius:9px;
+  font-weight:bold;
+  display:none;
+}
 
 .camera-box{
   position:relative;
@@ -176,18 +230,6 @@ video{
   pointer-events:none;
 }
 
-/* ІНШІ ЕЛЕМЕНТИ */
-
-.hint{
-  max-width:550px;
-  margin:8px auto;
-  padding:8px;
-  border-radius:9px;
-  background:#e8f2ff;
-  color:#17578c;
-  font-size:13px;
-}
-
 #result{
   max-width:550px;
   margin:10px auto;
@@ -200,123 +242,11 @@ video{
 }
 
 #details{
+  max-width:550px;
   font-size:13px;
   color:#555;
   margin:8px auto;
 }
-
-.manual{
-  max-width:550px;
-  margin:12px auto;
-}
-
-.manual input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
-}
-
-#confirmBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:#fff1cc;
-  border:1px solid #e1bd62;
-  border-radius:10px;
-}
-
-#confirmCode{
-  font-size:24px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-}
-
-#history{
-  max-width:550px;
-  margin:15px auto;
-  text-align:left;
-}
-
-.history-item{
-  background:white;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border-left:5px solid #aaa;
-  overflow-wrap:anywhere;
-}
-
-.history-item.found{border-color:#188038}
-.history-item.added{border-color:#c68100}
-.history-item.error{border-color:#c62828}
-
-.sound-controls{
-  max-width:550px;
-  margin:8px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.sound-controls label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:15px;
-}
-
-.sound-controls input{
-  width:19px;
-  height:19px;
-}
-
-.location-box{
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:white;
-  border:1px solid #ccd4dc;
-  border-radius:12px;
-  text-align:left;
-}
-
-.location-box label{
-  display:block;
-  margin:10px 0 5px;
-  font-weight:bold;
-}
-
-.location-box input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
-}
-
-.location-box button{
-  width:100%;
-  margin:14px 0 0;
-}
-
-#locationForm{display:none}
-
-#activeLocation{
-  max-width:550px;
-  margin:10px auto;
-  padding:12px;
-  background:#dff2e4;
-  border-radius:9px;
-  font-weight:bold;
-  display:none;
-}
-
-/* ЗАМІНА НАЛІПОК */
 
 #labelBox{
   display:none;
@@ -352,7 +282,68 @@ video{
   margin-top:8px;
 }
 
-/* ДОДАТКОВА АДАПТАЦІЯ ДЛЯ ТЕЛЕФОНІВ */
+#serialBtn{
+  max-width:550px;
+  width:calc(100% - 8px);
+  min-height:48px;
+}
+
+.serial-location{
+  padding:9px;
+  background:#dff2e4;
+  border-radius:8px;
+  font-size:14px;
+  text-align:center;
+}
+
+#confirmBox{
+  display:none;
+  max-width:550px;
+  margin:12px auto;
+  padding:16px;
+  background:#fff1cc;
+  border:1px solid #e1bd62;
+  border-radius:10px;
+}
+
+#confirmCode{
+  font-size:24px;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.manual{
+  max-width:550px;
+  margin:12px auto;
+}
+
+.manual input{
+  width:100%;
+  padding:12px;
+  font-size:18px;
+  border:1px solid #aaa;
+  border-radius:9px;
+}
+
+#history{
+  max-width:550px;
+  margin:15px auto;
+  text-align:left;
+}
+
+.history-item{
+  background:white;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border-left:5px solid #aaa;
+  overflow-wrap:anywhere;
+}
+
+.history-item.found{border-color:#188038}
+.history-item.added{border-color:#c68100}
+.history-item.error{border-color:#c62828}
+.history-item.serial{border-color:#6941a5}
 
 @media(max-width:400px){
   body{padding:8px}
@@ -362,8 +353,6 @@ video{
   .global-heading h3{font-size:15px}
   .global-cell strong{font-size:18px}
   .global-cell{font-size:11px}
-  .label-count{font-size:12px}
-  #statsStatus{font-size:10px}
   button{font-size:15px;padding:11px}
 }
 </style>
@@ -374,10 +363,7 @@ video{
 <h2>Держмитслужба</h2>
 <h3>Інвентаризація 2026</h3>
 
-<!-- КОМПАКТНА СТАТИСТИКА -->
-
 <div class="global-stats">
-
   <div class="global-heading">
     <h3>Прогрес інвентаризації</h3>
     <span id="globalPercent">—</span>
@@ -388,12 +374,10 @@ video{
       <strong id="globalTotal">—</strong>
       Всього
     </div>
-
     <div class="global-cell">
       <strong id="globalChecked">—</strong>
       Перевірено
     </div>
-
     <div class="global-cell">
       <strong id="globalRemaining">—</strong>
       Залишилось
@@ -405,14 +389,10 @@ video{
   </div>
 
   <div class="global-footer">
-    <div class="label-count">
-      🏷️ Наліпок для заміни:
-      <strong id="globalLabels">—</strong>
-    </div>
-
-    <div id="statsStatus">Оновлення…</div>
+    <span>🏷️ Замінити: <strong id="globalLabels">—</strong></span>
+    <span>🏷️ Поклеїти: <strong id="globalStickers">—</strong></span>
+    <span id="statsStatus">Оновлення…</span>
   </div>
-
 </div>
 
 <div class="hint">
@@ -436,22 +416,14 @@ video{
 <div id="locationForm" class="location-box">
   <strong>Місце інвентаризації</strong>
 
-  <label for="buildingInput">
-    Корпус (стовпець G)
-  </label>
-
+  <label for="buildingInput">Корпус (G)</label>
   <input id="buildingInput"
-         type="text"
          maxlength="100"
          autocomplete="off"
          placeholder="Наприклад: 1">
 
-  <label for="roomInput">
-    Кабінет (стовпець H)
-  </label>
-
+  <label for="roomInput">Кабінет (H)</label>
   <input id="roomInput"
-         type="text"
          maxlength="100"
          autocomplete="off"
          placeholder="Наприклад: 205">
@@ -482,8 +454,6 @@ video{
 <div id="result">Очікування сканування...</div>
 <div id="details"></div>
 
-<!-- ПОЗНАЧЕННЯ НАЛІПОК -->
-
 <div id="labelBox">
   <h3>🏷️ Стан інвентарної наліпки</h3>
 
@@ -499,11 +469,40 @@ video{
   <div id="labelMessage"></div>
 </div>
 
-<!-- ДОДАВАННЯ НОМЕРА -->
+<!-- НОВА ФУНКЦІЯ -->
+
+<button id="serialBtn"
+        class="purple"
+        onclick="openSerialForm()">
+  🏷️ Немає інвентарної наліпки
+</button>
+
+<div id="serialForm" class="serial-box">
+  <h3>Обладнання без наліпки</h3>
+
+  <div id="serialLocation" class="serial-location"></div>
+
+  <label for="serialInput">Серійний номер *</label>
+
+  <input id="serialInput"
+         maxlength="150"
+         autocomplete="off"
+         autocapitalize="characters"
+         placeholder="Введіть серійний номер">
+
+  <button id="saveSerialBtn"
+          class="green"
+          onclick="saveSerial()">
+    Зберегти обладнання
+  </button>
+
+  <button class="gray" onclick="closeSerialForm()">
+    Скасувати
+  </button>
+</div>
 
 <div id="confirmBox">
   <h3>Номер не знайдено</h3>
-
   <div id="confirmCode"></div>
 
   <p>Додати цей номер у Google Таблицю?</p>
@@ -517,11 +516,9 @@ video{
   </button>
 </div>
 
-<!-- РУЧНЕ ВВЕДЕННЯ -->
-
 <div class="manual">
   <input id="manualCode"
-         placeholder="Ввести номер вручну">
+         placeholder="Ввести інвентарний номер вручну">
 
   <button onclick="manualScan()">
     Перевірити номер
@@ -550,6 +547,7 @@ let reader = null;
 let scanning = false;
 let busy = false;
 let awaitingConfirmation = false;
+let serialFormOpen = false;
 
 let token = 0;
 let timer = null;
@@ -573,14 +571,12 @@ let labelBarcode = '';
 let labelReplace = false;
 let labelBusy = false;
 
-// Черга запитів до Google Apps Script
 const requestQueue = [];
 let activeRequest = null;
 let requestSequence = 0;
 let pendingStatsPromise = null;
 
 const canvas = document.createElement('canvas');
-
 const ctx = canvas.getContext('2d',{
   willReadFrequently:true
 });
@@ -606,10 +602,8 @@ function initSound(){
     if(audioContext.state === 'suspended'){
       audioContext.resume().catch(console.warn);
     }
-
   }catch(e){
-    details.textContent =
-      'Звук недоступний: ' + e.message;
+    console.warn('Звук:',e);
   }
 }
 
@@ -620,8 +614,7 @@ function tone(hz,duration,offset=0){
     return;
   }
 
-  const t = audioContext.currentTime + offset;
-
+  const t = audioContext.currentTime+offset;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
 
@@ -641,17 +634,14 @@ function tone(hz,duration,offset=0){
 }
 
 function sound(type){
-  if(type === 'scanned'){
+  if(type==='scanned'){
     tone(1450,.09);
-
-  }else if(type === 'found'){
+  }else if(type==='found'){
     tone(850,.17);
-
-  }else if(type === 'not_found'){
+  }else if(type==='not_found'){
     tone(550,.14);
     tone(550,.14,.22);
-
-  }else if(type === 'error'){
+  }else if(type==='error'){
     tone(320,.40);
   }
 }
@@ -673,7 +663,6 @@ async function testSound(){
     await audioContext.resume();
     sound('scanned');
     setTimeout(()=>sound('found'),450);
-
   }catch(e){
     show('Браузер не дозволив звук','#f4cccc');
   }
@@ -686,33 +675,33 @@ $('soundEnabled').addEventListener('change',e=>{
 /* ІНТЕРФЕЙС */
 
 function show(text,color='#e5e7eb'){
-  resultBox.textContent = text;
-  resultBox.style.background = color;
+  resultBox.textContent=text;
+  resultBox.style.background=color;
 }
 
 function validCode(code){
-  return typeof code === 'string' &&
-    code.trim().length > 0 &&
-    code.trim().length <= 150;
+  return typeof code==='string' &&
+    code.trim().length>0 &&
+    code.trim().length<=150;
 }
 
 function addHistory(code,status,message){
-  const item = document.createElement('div');
+  const item=document.createElement('div');
 
-  item.className = 'history-item ' + status;
+  item.className='history-item '+status;
 
-  item.textContent =
-    new Date().toLocaleTimeString('uk-UA') +
-    ' | ' + code + ' | ' + message;
+  item.textContent=
+    new Date().toLocaleTimeString('uk-UA')+
+    ' | '+code+' | '+message;
 
   $('history').prepend(item);
 
-  while($('history').children.length > 20){
+  while($('history').children.length>20){
     $('history').lastElementChild.remove();
   }
 }
 
-/* ЧЕРГА ЗАПИТІВ */
+/* ЗАПИТИ GOOGLE APPS SCRIPT */
 
 function apiRequest(
   action,
@@ -720,19 +709,22 @@ function apiRequest(
   location=sessionLocation,
   extra={}
 ){
-  if(action === 'stats' && pendingStatsPromise){
+  if(action==='stats' && pendingStatsPromise){
     return pendingStatsPromise;
   }
 
-  const promise = new Promise((resolve,reject)=>{
-
-    if((action === 'scan' || action === 'add') &&
-       (!location?.building || !location?.room)){
+  const promise=new Promise((resolve,reject)=>{
+    if(
+      (action==='scan' ||
+       action==='add' ||
+       action==='serial') &&
+      (!location?.building || !location?.room)
+    ){
       reject(Error('Не вказано корпус або кабінет'));
       return;
     }
 
-    const job = {
+    const job={
       id:++requestSequence,
       action,
       barcode,
@@ -742,17 +734,14 @@ function apiRequest(
       reject
     };
 
-    if(action === 'stats'){
+    if(action==='stats'){
       requestQueue.push(job);
-
     }else{
-      // Операції користувача важливіші
-      // за статистику в черзі.
-      const index = requestQueue.findIndex(
-        item=>item.action === 'stats'
+      const index=requestQueue.findIndex(
+        item=>item.action==='stats'
       );
 
-      if(index < 0){
+      if(index<0){
         requestQueue.push(job);
       }else{
         requestQueue.splice(index,0,job);
@@ -762,18 +751,18 @@ function apiRequest(
     processQueue();
   });
 
-  if(action === 'stats'){
-    pendingStatsPromise = promise;
+  if(action==='stats'){
+    pendingStatsPromise=promise;
 
     promise.then(
       ()=>{
-        if(pendingStatsPromise === promise){
-          pendingStatsPromise = null;
+        if(pendingStatsPromise===promise){
+          pendingStatsPromise=null;
         }
       },
       ()=>{
-        if(pendingStatsPromise === promise){
-          pendingStatsPromise = null;
+        if(pendingStatsPromise===promise){
+          pendingStatsPromise=null;
         }
       }
     );
@@ -783,21 +772,27 @@ function apiRequest(
 }
 
 function processQueue(){
-  if(activeRequest || requestQueue.length === 0){
+  if(activeRequest || requestQueue.length===0){
     return;
   }
 
-  const job = requestQueue.shift();
-  const script = document.createElement('script');
-  const url = new URL(SCRIPT_URL);
+  const job=requestQueue.shift();
+  const script=document.createElement('script');
+  const url=new URL(SCRIPT_URL);
 
   url.searchParams.set('action',job.action);
 
-  if(job.action !== 'stats'){
+  if(job.action==='serial'){
+    url.searchParams.set('serial',job.barcode);
+  }else if(job.action!=='stats'){
     url.searchParams.set('barcode',job.barcode);
   }
 
-  if(job.action === 'scan' || job.action === 'add'){
+  if(
+    job.action==='scan' ||
+    job.action==='add' ||
+    job.action==='serial'
+  ){
     url.searchParams.set(
       'building',job.location.building
     );
@@ -807,10 +802,10 @@ function processQueue(){
     );
   }
 
-  if(job.action === 'label'){
+  if(job.action==='label'){
     url.searchParams.set(
       'replace',
-      job.extra.replace ? '1' : '0'
+      job.extra.replace?'1':'0'
     );
   }
 
@@ -822,25 +817,25 @@ function processQueue(){
     '_',Date.now()+'-'+job.id
   );
 
-  const current = {
+  const current={
     job,
     script,
     timeout:null,
     finished:false
   };
 
-  activeRequest = current;
+  activeRequest=current;
 
-  script.src = url.toString();
-  script.async = true;
+  script.src=url.toString();
+  script.async=true;
 
-  script.onerror = ()=>{
+  script.onerror=()=>{
     finishActiveRequest(
       Error('Помилка зв’язку з Google Apps Script')
     );
   };
 
-  current.timeout = setTimeout(()=>{
+  current.timeout=setTimeout(()=>{
     finishActiveRequest(
       Error('Час очікування відповіді минув')
     );
@@ -850,22 +845,22 @@ function processQueue(){
 }
 
 function finishActiveRequest(error,data){
-  const current = activeRequest;
+  const current=activeRequest;
 
   if(!current || current.finished){
     return;
   }
 
-  current.finished = true;
+  current.finished=true;
 
   if(current.timeout){
     clearTimeout(current.timeout);
   }
 
-  current.script.onerror = null;
+  current.script.onerror=null;
   current.script.remove();
 
-  activeRequest = null;
+  activeRequest=null;
 
   if(error){
     current.job.reject(error);
@@ -876,214 +871,350 @@ function finishActiveRequest(error,data){
   setTimeout(processQueue,0);
 }
 
-window.inventoryCallback = data=>{
+window.inventoryCallback=data=>{
   finishActiveRequest(null,data);
 };
 
-/* ЗАГАЛЬНА СТАТИСТИКА */
+/* СТАТИСТИКА */
 
 async function refreshGlobalStats(){
-  if(busy || labelBusy || awaitingConfirmation){
-    statsPending = true;
+  if(busy || labelBusy ||
+     awaitingConfirmation || serialFormOpen){
+    statsPending=true;
     return;
   }
 
   try{
-    const data = await apiRequest('stats');
+    const data=await apiRequest('stats');
 
-    if(data.status !== 'stats'){
+    if(data.status!=='stats'){
       throw Error(
-        data.message || 'Невідома відповідь'
+        data.message||'Невідома відповідь'
       );
     }
 
-    $('globalTotal').textContent =
+    $('globalTotal').textContent=
       Number(data.total).toLocaleString('uk-UA');
 
-    $('globalChecked').textContent =
+    $('globalChecked').textContent=
       Number(data.checked).toLocaleString('uk-UA');
 
-    $('globalRemaining').textContent =
+    $('globalRemaining').textContent=
       Number(data.remaining).toLocaleString('uk-UA');
 
-    $('globalLabels').textContent =
+    $('globalLabels').textContent=
       Number(data.labels).toLocaleString('uk-UA');
 
-    $('globalPercent').textContent =
+    $('globalStickers').textContent=
+      Number(data.stickers||0).toLocaleString('uk-UA');
+
+    $('globalPercent').textContent=
       Number(data.percent).toLocaleString('uk-UA')+'%';
 
-    $('globalProgress').style.width =
+    $('globalProgress').style.width=
       Math.max(
         0,
         Math.min(100,Number(data.percent))
       )+'%';
 
-    $('statsStatus').textContent =
+    $('statsStatus').textContent=
       new Date().toLocaleTimeString('uk-UA',{
         hour:'2-digit',
         minute:'2-digit'
       });
 
   }catch(e){
-    $('statsStatus').textContent =
-      'Помилка оновлення';
-
+    $('statsStatus').textContent='Помилка оновлення';
     console.warn('Статистика:',e);
   }
 }
 
 function requestStatsRefresh(){
-  statsPending = true;
+  statsPending=true;
   setTimeout(runPendingStats,400);
 }
 
 function runPendingStats(){
   if(!statsPending)return;
 
-  if(busy || labelBusy || awaitingConfirmation){
+  if(busy || labelBusy ||
+     awaitingConfirmation || serialFormOpen){
     return;
   }
 
-  statsPending = false;
+  statsPending=false;
   refreshGlobalStats();
 }
 
 /* ЗАМІНА НАЛІПОК */
 
 function hideLabel(){
-  labelBarcode = '';
-  labelReplace = false;
-
-  $('labelBox').style.display = 'none';
-  $('labelMessage').textContent = '';
+  labelBarcode='';
+  labelReplace=false;
+  $('labelBox').style.display='none';
+  $('labelMessage').textContent='';
 }
 
 function showLabel(code,replace){
-  labelBarcode = code;
-  labelReplace = Boolean(replace);
+  labelBarcode=code;
+  labelReplace=Boolean(replace);
 
-  $('labelBox').style.display = 'block';
-  $('labelCode').textContent = code;
-  $('labelMessage').textContent = '';
+  $('labelBox').style.display='block';
+  $('labelCode').textContent=code;
+  $('labelMessage').textContent='';
 
   renderLabel();
 }
 
 function renderLabel(){
-  const button = $('labelAction');
+  const button=$('labelAction');
 
   if(labelReplace){
-    $('labelState').textContent =
+    $('labelState').textContent=
       '⚠️ Потребує заміни';
 
-    $('labelState').style.color = '#9a5700';
+    $('labelState').style.color='#9a5700';
 
-    button.textContent =
+    button.textContent=
       'Скасувати позначку заміни';
 
-    button.className = 'gray';
-
+    button.className='gray';
   }else{
-    $('labelState').textContent =
+    $('labelState').textContent=
       'Позначки про заміну немає';
 
-    $('labelState').style.color = '#188038';
+    $('labelState').style.color='#188038';
 
-    button.textContent =
-      '🏷️ Замінити наліпку';
-
-    button.className = 'orange';
+    button.textContent='🏷️ Замінити наліпку';
+    button.className='orange';
   }
 
-  button.disabled = labelBusy;
+  button.disabled=labelBusy;
 }
 
 async function toggleLabel(){
   if(!labelBarcode || labelBusy ||
-     busy || awaitingConfirmation){
+     busy || awaitingConfirmation ||
+     serialFormOpen){
     return;
   }
 
-  const code = labelBarcode;
-  const newValue = !labelReplace;
+  const code=labelBarcode;
+  const newValue=!labelReplace;
 
-  labelBusy = true;
-  busy = true;
+  labelBusy=true;
+  busy=true;
 
   renderLabel();
 
-  $('labelMessage').textContent =
+  $('labelMessage').textContent=
     'Зберігаємо позначку в Google Таблиці…';
 
   try{
-    const data = await apiRequest(
+    const data=await apiRequest(
       'label',
       code,
       null,
       {replace:newValue}
     );
 
-    if(data.status !== 'label_updated'){
+    if(data.status!=='label_updated'){
       throw Error(
-        data.message ||
+        data.message||
         'Не вдалося зберегти позначку'
       );
     }
 
-    if(labelBarcode === code){
-      labelReplace = Boolean(data.labelReplace);
+    if(labelBarcode===code){
+      labelReplace=Boolean(data.labelReplace);
 
-      $('labelMessage').textContent =
+      $('labelMessage').textContent=
         '✓ '+data.message+
         '. Збережено в Google Таблиці.';
     }
 
-    addHistory(
-      code,
-      'found',
-      data.message
-    );
-
+    addHistory(code,'found',data.message);
     requestStatsRefresh();
 
   }catch(e){
-    $('labelMessage').textContent =
-      'Помилка збереження: '+e.message+
-      '. Перевірте стан у таблиці перед повторною спробою.';
+    $('labelMessage').textContent=
+      'Помилка збереження: '+e.message;
 
     sound('error');
 
   }finally{
-    labelBusy = false;
-    busy = false;
-
+    labelBusy=false;
+    busy=false;
     renderLabel();
     runPendingStats();
   }
 }
 
-/* РОЗПІЗНАВАННЯ ШТРИХКОДІВ */
+/* ОБЛАДНАННЯ БЕЗ НАЛІПКИ */
+
+function openSerialForm(){
+  initSound();
+
+  if(busy || awaitingConfirmation || labelBusy){
+    show(
+      'Дочекайтеся завершення поточної операції',
+      '#fff0c2'
+    );
+    return;
+  }
+
+  if(!sessionLocation){
+    show(
+      'Спочатку почніть сканування та виберіть корпус і кабінет',
+      '#fff0c2'
+    );
+    return;
+  }
+
+  serialFormOpen=true;
+
+  $('serialLocation').textContent=
+    'Корпус: '+sessionLocation.building+
+    ' | Кабінет: '+sessionLocation.room;
+
+  $('serialForm').style.display='block';
+  $('serialInput').value='';
+
+  show('Введіть серійний номер обладнання');
+  $('serialInput').focus();
+}
+
+function closeSerialForm(){
+  if(busy)return;
+
+  serialFormOpen=false;
+  $('serialForm').style.display='none';
+
+  runPendingStats();
+}
+
+async function saveSerial(){
+  initSound();
+
+  if(busy || !serialFormOpen ||
+     !sessionLocation){
+    return;
+  }
+
+  const serial=$('serialInput').value.trim();
+
+  if(!validCode(serial)){
+    show(
+      'Введіть серійний номер обладнання',
+      '#f4cccc'
+    );
+    $('serialInput').focus();
+    return;
+  }
+
+  const location=sessionLocation;
+
+  busy=true;
+  $('saveSerialBtn').disabled=true;
+
+  show(
+    'Перевіряємо серійний номер: '+serial,
+    '#fff3cd'
+  );
+
+  try{
+    const data=await apiRequest(
+      'serial',
+      serial,
+      location
+    );
+
+    if(data.status!=='serial_added'){
+      throw Error(
+        data.message||
+        'Не вдалося записати серійний номер'
+      );
+    }
+
+    if(data.matched){
+      show(
+        'ЗНАЙДЕНО: '+data.inventoryNumber,
+        '#b7e1cd'
+      );
+
+      details.textContent=
+        'Серійний номер: '+serial+
+        ' | Запис K:O, рядок '+data.row;
+
+      addHistory(
+        serial,
+        'serial',
+        'Інвентарний номер: '+
+        data.inventoryNumber
+      );
+
+    }else{
+      show(
+        'ЗБЕРЕЖЕНО: '+serial,
+        '#fff0c2'
+      );
+
+      details.textContent=
+        'Інвентарний номер не знайдено. '+
+        'У колонці O записано прочерк. '+
+        'Рядок '+data.row;
+
+      addHistory(
+        serial,
+        'serial',
+        'Без інвентарного номера'
+      );
+    }
+
+    sound('found');
+
+    $('serialInput').value='';
+    serialFormOpen=false;
+    $('serialForm').style.display='none';
+
+    requestStatsRefresh();
+
+  }catch(e){
+    show(
+      'Помилка: '+e.message,
+      '#f4cccc'
+    );
+
+    sound('error');
+
+  }finally{
+    busy=false;
+    $('saveSerialBtn').disabled=false;
+    runPendingStats();
+  }
+}
+
+/* РОЗПІЗНАВАННЯ CODE 128 */
 
 async function setupDecoders(){
-  detector = null;
-  reader = null;
+  detector=null;
+  reader=null;
 
   if('BarcodeDetector' in window){
     try{
-      const formats =
+      const formats=
         await BarcodeDetector.getSupportedFormats();
 
       if(formats.includes('code_128')){
-        detector = new BarcodeDetector({
+        detector=new BarcodeDetector({
           formats:['code_128']
         });
       }
-
     }catch(e){}
   }
 
   if(window.ZXing){
-    const hints = new Map();
+    const hints=new Map();
 
     hints.set(
       ZXing.DecodeHintType.POSSIBLE_FORMATS,
@@ -1095,7 +1226,7 @@ async function setupDecoders(){
       false
     );
 
-    reader = new ZXing.MultiFormatReader();
+    reader=new ZXing.MultiFormatReader();
     reader.setHints(hints);
   }
 
@@ -1105,7 +1236,7 @@ async function setupDecoders(){
 }
 
 async function openCamera(){
-  const modes = [
+  const modes=[
     {
       facingMode:{ideal:'environment'},
       width:{ideal:1920},
@@ -1116,9 +1247,7 @@ async function openCamera(){
       width:{ideal:1280},
       height:{ideal:720}
     },
-    {
-      facingMode:{ideal:'environment'}
-    },
+    {facingMode:{ideal:'environment'}},
     true
   ];
 
@@ -1130,23 +1259,22 @@ async function openCamera(){
         video:mode,
         audio:false
       });
-
     }catch(e){
-      error = e;
+      error=e;
 
-      if(e.name === 'NotAllowedError' ||
-         e.name === 'SecurityError'){
+      if(e.name==='NotAllowedError' ||
+         e.name==='SecurityError'){
         throw e;
       }
     }
   }
 
-  throw error || Error('Камера недоступна');
+  throw error||Error('Камера недоступна');
 }
 
 async function configureCamera(track){
   try{
-    const caps = track.getCapabilities?.() || {};
+    const caps=track.getCapabilities?.()||{};
 
     if(caps.focusMode?.includes('continuous')){
       try{
@@ -1159,7 +1287,7 @@ async function configureCamera(track){
     if(caps.zoom &&
        Number.isFinite(caps.zoom.min) &&
        Number.isFinite(caps.zoom.max)){
-      const zoom = Math.max(
+      const zoom=Math.max(
         caps.zoom.min,
         Math.min(1,caps.zoom.max)
       );
@@ -1173,59 +1301,53 @@ async function configureCamera(track){
   }catch(e){}
 }
 
-/* КОРПУС І КАБІНЕТ */
+/* ВИБІР МІСЦЯ */
 
 function requestLocation(){
   if(scanning || busy || awaitingConfirmation){
     return;
   }
 
-  $('locationForm').style.display = 'block';
-  $('startBtn').disabled = true;
+  $('locationForm').style.display='block';
+  $('startBtn').disabled=true;
 
   show('Введіть корпус і кабінет');
   $('buildingInput').focus();
 }
 
 function cancelLocation(){
-  $('locationForm').style.display = 'none';
-  $('startBtn').disabled = false;
+  $('locationForm').style.display='none';
+  $('startBtn').disabled=false;
 
   show('Введення місця скасовано');
 }
 
 function confirmLocation(){
-  const building = $('buildingInput').value.trim();
-  const room = $('roomInput').value.trim();
+  const building=$('buildingInput').value.trim();
+  const room=$('roomInput').value.trim();
 
   if(!building || !room){
-    show(
-      'Заповніть корпус і кабінет',
-      '#f4cccc'
-    );
+    show('Заповніть корпус і кабінет','#f4cccc');
     return;
   }
 
-  if(building.length > 100 || room.length > 100){
-    show(
-      'Занадто довге значення',
-      '#f4cccc'
-    );
+  if(building.length>100 || room.length>100){
+    show('Занадто довге значення','#f4cccc');
     return;
   }
 
-  sessionLocation = Object.freeze({
+  sessionLocation=Object.freeze({
     building,
     room
   });
 
-  $('locationForm').style.display = 'none';
+  $('locationForm').style.display='none';
 
-  $('activeLocation').textContent =
+  $('activeLocation').textContent=
     'Корпус: '+building+
     ' | Кабінет: '+room;
 
-  $('activeLocation').style.display = 'block';
+  $('activeLocation').style.display='block';
 
   startScanner();
 }
@@ -1242,30 +1364,30 @@ async function startScanner(){
 
   if(scanning)return;
 
-  const current = ++token;
+  const current=++token;
 
-  scanning = true;
-  busy = false;
-  awaitingConfirmation = false;
+  scanning=true;
+  busy=false;
+  awaitingConfirmation=false;
 
-  $('startBtn').disabled = true;
+  $('startBtn').disabled=true;
 
   try{
     show('Запуск камери...');
 
-    const opened = await openCamera();
+    const opened=await openCamera();
 
-    if(!scanning || current !== token){
+    if(!scanning || current!==token){
       opened.getTracks().forEach(t=>t.stop());
       return;
     }
 
-    stream = opened;
-    video.srcObject = stream;
+    stream=opened;
+    video.srcObject=stream;
 
     await video.play();
 
-    if(!scanning || current !== token){
+    if(!scanning || current!==token){
       return;
     }
 
@@ -1275,21 +1397,21 @@ async function startScanner(){
 
     await setupDecoders();
 
-    if(!scanning || current !== token){
+    if(!scanning || current!==token){
       return;
     }
 
-    frameCount = 0;
-    startedAt = performance.now();
+    frameCount=0;
+    startedAt=performance.now();
 
-    candidate = '';
-    candidateCount = 0;
-    lastHandled = '';
-    lastSeenAt = 0;
+    candidate='';
+    candidateCount=0;
+    lastHandled='';
+    lastSeenAt=0;
 
     show('Наведіть штрихкод у рамку');
 
-    details.textContent =
+    details.textContent=
       'Камера працює безперервно';
 
     schedule(current,0);
@@ -1297,67 +1419,42 @@ async function startScanner(){
   }catch(e){
     stopScanner();
 
-    show(
-      'Помилка: '+e.message,
-      '#f4cccc'
-    );
-
+    show('Помилка: '+e.message,'#f4cccc');
     sound('error');
   }
 }
 
 function schedule(current,delay=40){
-  if(!scanning || current !== token){
-    return;
-  }
+  if(!scanning || current!==token)return;
 
-  timer = setTimeout(
+  timer=setTimeout(
     ()=>scanFrame(current),
     delay
   );
 }
 
 function drawRegion(mode){
-  const w = video.videoWidth;
-  const h = video.videoHeight;
+  const w=video.videoWidth;
+  const h=video.videoHeight;
 
-  if(!w || !h){
-    return false;
-  }
+  if(!w || !h)return false;
 
-  const wide = mode === 'wide';
+  const wide=mode==='wide';
 
-  const sx = Math.floor(
-    w*(wide?.02:.05)
+  const sx=Math.floor(w*(wide?.02:.05));
+  const sy=Math.floor(h*(wide?.25:.38));
+  const sw=Math.floor(w*(wide?.96:.90));
+  const sh=Math.floor(h*(wide?.50:.24));
+
+  const maxWidth=wide?1600:1280;
+  const scale=Math.min(1,maxWidth/sw);
+
+  canvas.width=Math.max(
+    1,Math.round(sw*scale)
   );
 
-  const sy = Math.floor(
-    h*(wide?.25:.38)
-  );
-
-  const sw = Math.floor(
-    w*(wide?.96:.90)
-  );
-
-  const sh = Math.floor(
-    h*(wide?.50:.24)
-  );
-
-  const maxWidth = wide?1600:1280;
-
-  const scale = Math.min(
-    1,
-    maxWidth/sw
-  );
-
-  canvas.width = Math.max(
-    1,
-    Math.round(sw*scale)
-  );
-
-  canvas.height = Math.max(
-    1,
-    Math.round(sh*scale)
+  canvas.height=Math.max(
+    1,Math.round(sh*scale)
   );
 
   ctx.drawImage(
@@ -1370,46 +1467,41 @@ function drawRegion(mode){
 }
 
 function decodeZXing(){
-  if(!reader){
-    return '';
-  }
+  if(!reader)return '';
 
   try{
-    const source =
+    const source=
       new ZXing.HTMLCanvasElementLuminanceSource(
         canvas
       );
 
-    const bitmap =
+    const bitmap=
       new ZXing.BinaryBitmap(
         new ZXing.HybridBinarizer(source)
       );
 
-    const result = reader.decode(bitmap);
+    const result=reader.decode(bitmap);
 
     return result
-      ? String(result.getText()).trim()
-      : '';
+      ?String(result.getText()).trim()
+      :'';
 
   }catch(e){
     return '';
-
   }finally{
     reader.reset();
   }
 }
 
 async function scanFrame(current){
-  if(!scanning || current !== token){
-    return;
-  }
+  if(!scanning || current!==token)return;
 
-  if(busy || awaitingConfirmation){
+  if(busy || awaitingConfirmation || serialFormOpen){
     schedule(current,100);
     return;
   }
 
-  if(video.readyState < 2){
+  if(video.readyState<2){
     schedule(current,100);
     return;
   }
@@ -1417,93 +1509,81 @@ async function scanFrame(current){
   try{
     frameCount++;
 
-    const elapsed =
-      performance.now()-startedAt;
+    const elapsed=performance.now()-startedAt;
 
-    const mode =
+    const mode=
       elapsed>2500 && frameCount%3===0
-        ? 'wide'
-        : 'fast';
+        ?'wide':'fast';
 
-    if(!drawRegion(mode)){
-      return;
-    }
+    if(!drawRegion(mode))return;
 
-    let code = '';
+    let code='';
 
     if(detector){
       try{
-        const found =
-          await detector.detect(canvas);
+        const found=await detector.detect(canvas);
 
-        if(current !== token || !scanning){
-          return;
-        }
+        if(current!==token || !scanning)return;
 
-        const item = found.find(
-          x=>x.format === 'code_128'
+        const item=found.find(
+          x=>x.format==='code_128'
         );
 
         if(item){
-          code = String(
-            item.rawValue||''
-          ).trim();
+          code=String(item.rawValue||'').trim();
         }
-
       }catch(e){}
     }
 
     if(!code && reader &&
        (!detector ||
        (elapsed>1200 && frameCount%3===0))){
-      code = decodeZXing();
+      code=decodeZXing();
     }
 
-    const now = performance.now();
+    const now=performance.now();
 
     if(validCode(code)){
-      lastSeenAt = now;
+      lastSeenAt=now;
 
-      if(code === lastHandled){
-        candidate = '';
-        candidateCount = 0;
+      if(code===lastHandled){
+        candidate='';
+        candidateCount=0;
         return;
       }
 
-      if(code === candidate &&
+      if(code===candidate &&
          now-candidateTime<2000){
         candidateCount++;
-
       }else{
-        candidate = code;
-        candidateCount = 1;
+        candidate=code;
+        candidateCount=1;
       }
 
-      candidateTime = now;
+      candidateTime=now;
 
       if(candidateCount>=2){
-        candidate = '';
-        candidateCount = 0;
+        candidate='';
+        candidateCount=0;
 
-        lastHandled = code;
-        busy = true;
+        lastHandled=code;
+        busy=true;
 
         sound('scanned');
         processBarcode(code);
       }
 
     }else{
-      candidate = '';
-      candidateCount = 0;
+      candidate='';
+      candidateCount=0;
 
       if(now-lastSeenAt>1500){
-        lastHandled = '';
+        lastHandled='';
       }
     }
 
   }catch(e){
     console.warn(e);
-
   }finally{
     if(scanning && current===token){
       schedule(current,40);
@@ -1511,48 +1591,34 @@ async function scanFrame(current){
   }
 }
 
-/* ПЕРЕВІРКА НОМЕРА */
+/* ПЕРЕВІРКА ІНВЕНТАРНОГО НОМЕРА */
 
 async function processBarcode(code){
-  const started = performance.now();
-  const location = sessionLocation;
+  const started=performance.now();
+  const location=sessionLocation;
 
   hideLabel();
 
-  show(
-    'Перевіряємо: '+code,
-    '#fff3cd'
-  );
+  show('Перевіряємо: '+code,'#fff3cd');
 
   try{
-    const data = await apiRequest(
-      'scan',
-      code,
-      location
+    const data=await apiRequest(
+      'scan',code,location
     );
 
-    if(!scanning){
-      return;
-    }
+    if(!scanning)return;
 
-    const seconds =
-      ((performance.now()-started)/1000)
-      .toFixed(1);
+    const seconds=
+      ((performance.now()-started)/1000).toFixed(1);
 
-    if(data.status === 'found'){
-      show(
-        'ЗНАЙДЕНО: '+code,
-        '#b7e1cd'
-      );
+    if(data.status==='found'){
+      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
 
-      details.textContent =
+      details.textContent=
         'Рядок '+data.row+
         ' | Запит: '+seconds+' с';
 
-      showLabel(
-        code,
-        data.labelReplace
-      );
+      showLabel(code,data.labelReplace);
 
       addHistory(
         code,
@@ -1567,19 +1633,16 @@ async function processBarcode(code){
 
       requestStatsRefresh();
 
-    }else if(data.status === 'not_found'){
-      awaitingConfirmation = true;
-      pendingBarcode = code;
+    }else if(data.status==='not_found'){
+      awaitingConfirmation=true;
+      pendingBarcode=code;
 
-      $('confirmCode').textContent = code;
-      $('confirmBox').style.display = 'block';
+      $('confirmCode').textContent=code;
+      $('confirmBox').style.display='block';
 
-      show(
-        'НЕ ЗНАЙДЕНО: '+code,
-        '#fff0c2'
-      );
+      show('НЕ ЗНАЙДЕНО: '+code,'#fff0c2');
 
-      details.textContent =
+      details.textContent=
         'Потрібне підтвердження додавання';
 
       sound('not_found');
@@ -1592,64 +1655,41 @@ async function processBarcode(code){
     }
 
   }catch(e){
-    show(
-      'Помилка: '+e.message,
-      '#f4cccc'
-    );
-
-    addHistory(
-      code,
-      'error',
-      e.message
-    );
-
+    show('Помилка: '+e.message,'#f4cccc');
+    addHistory(code,'error',e.message);
     sound('error');
-
   }finally{
-    busy = false;
+    busy=false;
     runPendingStats();
   }
 }
 
-/* ДОДАВАННЯ НОМЕРА */
+/* ДОДАВАННЯ ІНВЕНТАРНОГО НОМЕРА */
 
 async function confirmAdd(){
   initSound();
 
-  if(!awaitingConfirmation || busy){
-    return;
-  }
+  if(!awaitingConfirmation || busy)return;
 
-  const code = pendingBarcode;
-  const location = sessionLocation;
+  const code=pendingBarcode;
+  const location=sessionLocation;
 
-  busy = true;
+  busy=true;
 
-  show(
-    'Додаємо номер: '+code,
-    '#fff3cd'
-  );
+  show('Додаємо номер: '+code,'#fff3cd');
 
   try{
-    const data = await apiRequest(
-      'add',
-      code,
-      location
+    const data=await apiRequest(
+      'add',code,location
     );
 
-    if(data.status === 'added'){
-      show(
-        'ДОДАНО: '+code,
-        '#fff0c2'
-      );
+    if(data.status==='added'){
+      show('ДОДАНО: '+code,'#fff0c2');
 
-      details.textContent =
+      details.textContent=
         'Новий номер у рядку '+data.row;
 
-      showLabel(
-        code,
-        data.labelReplace
-      );
+      showLabel(code,data.labelReplace);
 
       addHistory(
         code,
@@ -1661,23 +1701,11 @@ async function confirmAdd(){
 
       sound('found');
 
-    }else if(data.status === 'found'){
-      show(
-        'ЗНАЙДЕНО: '+code,
-        '#b7e1cd'
-      );
+    }else if(data.status==='found'){
+      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
 
-      showLabel(
-        code,
-        data.labelReplace
-      );
-
-      addHistory(
-        code,
-        'found',
-        'Знайдено'
-      );
-
+      showLabel(code,data.labelReplace);
+      addHistory(code,'found','Знайдено');
       sound('found');
 
     }else{
@@ -1695,39 +1723,28 @@ async function confirmAdd(){
       'Помилка додавання: '+e.message,
       '#f4cccc'
     );
-
     sound('error');
-
   }finally{
-    busy = false;
+    busy=false;
     runPendingStats();
   }
 }
 
 function closeConfirmation(){
-  awaitingConfirmation = false;
-  pendingBarcode = '';
-
-  $('confirmBox').style.display = 'none';
+  awaitingConfirmation=false;
+  pendingBarcode='';
+  $('confirmBox').style.display='none';
 }
 
 function cancelAdd(){
   if(busy)return;
 
-  const code = pendingBarcode;
-
+  const code=pendingBarcode;
   closeConfirmation();
 
-  show(
-    'Додавання скасовано: '+code
-  );
+  show('Додавання скасовано: '+code);
 
-  addHistory(
-    code,
-    'error',
-    'Скасовано'
-  );
-
+  addHistory(code,'error','Скасовано');
   runPendingStats();
 }
 
@@ -1736,20 +1753,21 @@ function cancelAdd(){
 function manualScan(){
   initSound();
 
-  if(busy || awaitingConfirmation || labelBusy){
+  if(busy || awaitingConfirmation ||
+     labelBusy || serialFormOpen){
     return;
   }
 
   if(!scanning || !sessionLocation){
     show(
-      'Спочатку натисніть «Почати сканування» та вкажіть місце',
+      'Спочатку почніть сканування та вкажіть місце',
       '#fff0c2'
     );
     return;
   }
 
-  const input = $('manualCode');
-  const code = input.value.trim();
+  const input=$('manualCode');
+  const code=input.value.trim();
 
   if(!validCode(code)){
     show(
@@ -1759,53 +1777,53 @@ function manualScan(){
     return;
   }
 
-  lastHandled = code;
-  busy = true;
+  lastHandled=code;
+  busy=true;
 
-  input.value = '';
+  input.value='';
 
   sound('scanned');
   processBarcode(code);
 }
 
-/* ЗУПИНКА СКАНЕРА */
+/* ЗУПИНКА */
 
 function stopScanner(){
-  if(busy || awaitingConfirmation || labelBusy){
+  if(busy || awaitingConfirmation ||
+     labelBusy || serialFormOpen){
     show(
-      'Дочекайтеся завершення операції або скасуйте додавання',
+      'Завершіть поточну операцію',
       '#fff0c2'
     );
     return;
   }
 
-  sessionLocation = null;
+  sessionLocation=null;
 
-  $('activeLocation').style.display = 'none';
-  $('locationForm').style.display = 'none';
+  $('activeLocation').style.display='none';
+  $('locationForm').style.display='none';
 
-  scanning = false;
+  scanning=false;
   token++;
 
   if(timer){
     clearTimeout(timer);
-    timer = null;
+    timer=null;
   }
 
   if(stream){
     stream.getTracks().forEach(
       track=>track.stop()
     );
-
-    stream = null;
+    stream=null;
   }
 
-  video.srcObject = null;
+  video.srcObject=null;
 
-  detector = null;
-  reader = null;
+  detector=null;
+  reader=null;
 
-  $('startBtn').disabled = false;
+  $('startBtn').disabled=false;
 
   hideLabel();
   show('Сканування зупинено');
@@ -1817,7 +1835,7 @@ window.addEventListener('pagehide',()=>{
   }
 });
 
-/* ПОЧАТКОВЕ ЗАВАНТАЖЕННЯ */
+/* ЗАПУСК */
 
 refreshGlobalStats();
 
