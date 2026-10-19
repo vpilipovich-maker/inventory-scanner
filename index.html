@@ -4,267 +4,101 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Інвентаризація V12.3</title>
-
+<title>Держмитслужба — Інвентаризація V12.4</title>
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  padding:12px;
-  font-family:Arial,sans-serif;
-  text-align:center;
-  background:#f5f6f8;
-  color:#222;
-}
-
-h2{margin:8px 0}
-p{color:#555}
-
-button{
-  border:0;
-  border-radius:9px;
-  padding:12px 15px;
-  margin:4px;
-  font-size:16px;
-  color:white;
-  background:#1769aa;
-}
-
+body{margin:0;padding:12px;font-family:Arial,sans-serif;text-align:center;background:#f5f6f8;color:#222}
+h2{margin:8px 0}h3{margin:10px 0}p{color:#555}
+button{border:0;border-radius:9px;padding:12px 15px;margin:4px;font-size:16px;color:white;background:#1769aa;cursor:pointer}
 button:disabled{opacity:.5}
-.gray{background:#666}
-.red{background:#b3261e}
-
-.camera-box{
-  position:relative;
-  max-width:550px;
-  margin:12px auto;
-  background:black;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-video{
-  display:block;
-  width:100%;
-  height:auto;
-}
-
-.scan-area{
-  position:absolute;
-  left:12%;
-  top:40%;
-  width:76%;
-  height:20%;
-  border:2px solid #00ff88;
-  border-radius:8px;
-  pointer-events:none;
-}
-
-.scan-line{
-  position:absolute;
-  left:15%;
-  top:50%;
-  width:70%;
-  border-top:2px solid #00ff88;
-  pointer-events:none;
-}
-
-.hint{
-  max-width:550px;
-  margin:10px auto;
-  padding:10px;
-  border-radius:9px;
-  background:#e8f2ff;
-  color:#17578c;
-}
-
-#result{
-  max-width:550px;
-  margin:12px auto;
-  padding:15px;
-  border-radius:10px;
-  background:#e5e7eb;
-  font-size:18px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-}
-
-#details{
-  font-size:13px;
-  color:#555;
-  margin:8px auto;
-}
-
-.stats{
-  display:flex;
-  gap:8px;
-  max-width:550px;
-  margin:12px auto;
-}
-
-.stat{
-  flex:1;
-  padding:12px 5px;
-  background:white;
-  border-radius:9px;
-  border:1px solid #ddd;
-}
-
-.stat strong{
-  display:block;
-  font-size:25px;
-}
-
-.manual{
-  max-width:550px;
-  margin:15px auto;
-}
-
-.manual input{
-  width:100%;
-  padding:12px;
-  font-size:18px;
-  border:1px solid #aaa;
-  border-radius:9px;
-}
-
-#confirmBox{
-  display:none;
-  max-width:550px;
-  margin:12px auto;
-  padding:16px;
-  background:#fff1cc;
-  border:1px solid #e1bd62;
-  border-radius:10px;
-}
-
-#confirmCode{
-  font-size:24px;
-  font-weight:bold;
-  overflow-wrap:anywhere;
-}
-
-#history{
-  max-width:550px;
-  margin:15px auto;
-  text-align:left;
-}
-
-.history-item{
-  background:white;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border-left:5px solid #aaa;
-  overflow-wrap:anywhere;
-}
-
+.gray{background:#666}.red{background:#b3261e}
+.camera-box{position:relative;max-width:550px;margin:12px auto;background:#000;border-radius:12px;overflow:hidden}
+video{display:block;width:100%;height:auto}
+.scan-area{position:absolute;left:12%;top:40%;width:76%;height:20%;border:2px solid #00ff88;border-radius:8px;pointer-events:none}
+.scan-line{position:absolute;left:15%;top:50%;width:70%;border-top:2px solid #00ff88;pointer-events:none}
+.hint{max-width:550px;margin:10px auto;padding:10px;border-radius:9px;background:#e8f2ff;color:#17578c}
+#result{max-width:550px;margin:12px auto;padding:15px;border-radius:10px;background:#e5e7eb;font-size:18px;font-weight:bold;overflow-wrap:anywhere}
+#details{font-size:13px;color:#555;margin:8px auto}
+.stats{display:flex;gap:8px;max-width:550px;margin:12px auto}
+.stat{flex:1;padding:12px 5px;background:white;border-radius:9px;border:1px solid #ddd}
+.stat strong{display:block;font-size:25px}
+.manual{max-width:550px;margin:15px auto}
+.manual input{width:100%;padding:12px;font-size:18px;border:1px solid #aaa;border-radius:9px}
+#confirmBox{display:none;max-width:550px;margin:12px auto;padding:16px;background:#fff1cc;border:1px solid #e1bd62;border-radius:10px}
+#confirmCode{font-size:24px;font-weight:bold;overflow-wrap:anywhere}
+#history{max-width:550px;margin:15px auto;text-align:left}
+.history-item{background:white;padding:10px;margin:5px 0;border-radius:8px;border-left:5px solid #aaa;overflow-wrap:anywhere}
 .history-item.found{border-color:#188038}
 .history-item.added{border-color:#c68100}
 .history-item.error{border-color:#c62828}
-
-.sound-controls{
-  max-width:550px;
-  margin:8px auto;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.sound-controls label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:16px;
-}
-
-.sound-controls input{
-  width:19px;
-  height:19px;
-}
+.sound-controls{max-width:550px;margin:8px auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.sound-controls label{display:flex;align-items:center;gap:6px;font-size:16px}
+.sound-controls input{width:19px;height:19px}
+.location-box{max-width:550px;margin:12px auto;padding:16px;background:white;border:1px solid #ccd4dc;border-radius:12px;text-align:left}
+.location-box label{display:block;margin:10px 0 5px;font-weight:bold}
+.location-box input{width:100%;padding:12px;font-size:18px;border:1px solid #aaa;border-radius:9px}
+.location-box button{width:100%;margin:14px 0 0}
+#locationForm{display:none}
+#activeLocation{max-width:550px;margin:10px auto;padding:12px;background:#dff2e4;border-radius:9px;font-weight:bold;display:none}
 </style>
 </head>
-
 <body>
 
 <h2>Держмитслужба</h2>
 <h3>Інвентаризація 2026</h3>
 
 <div class="hint">
-  Перший звук — штрихкод зчитано.
-  Другий звук — перевірку в Google Таблиці завершено.
+Перший звук — штрихкод зчитано.<br>
+Другий звук — перевірку в Google Таблиці завершено.
 </div>
 
 <div class="sound-controls">
-  <label>
-    <input type="checkbox" id="soundEnabled" checked>
-    Звук увімкнено
-  </label>
-
-  <button class="gray" onclick="testSound()">
-    🔊 Перевірити звук
-  </button>
+<label><input type="checkbox" id="soundEnabled" checked> Звук увімкнено</label>
+<button class="gray" onclick="testSound()">🔊 Перевірити звук</button>
 </div>
 
-<button id="startBtn" onclick="startScanner()">
-  Почати сканування
-</button>
+<div id="activeLocation"></div>
 
-<button class="gray" onclick="stopScanner()">
-  Зупинити
-</button>
+<div id="locationForm" class="location-box">
+<strong>Місце інвентаризації</strong>
+<label for="buildingInput">Корпус (стовпець G)</label>
+<input id="buildingInput" type="text" maxlength="100" autocomplete="off" placeholder="Наприклад: 1">
+<label for="roomInput">Кабінет (стовпець H)</label>
+<input id="roomInput" type="text" maxlength="100" autocomplete="off" placeholder="Наприклад: 205">
+<button onclick="confirmLocation()">Підтвердити та сканувати</button>
+<button class="gray" onclick="cancelLocation()">Скасувати</button>
+</div>
+
+<button id="startBtn" onclick="requestLocation()">Почати сканування</button>
+<button class="gray" onclick="stopScanner()">Зупинити</button>
 
 <div class="camera-box">
-  <video id="camera" autoplay playsinline muted></video>
-  <div class="scan-area"></div>
-  <div class="scan-line"></div>
+<video id="camera" autoplay playsinline muted></video>
+<div class="scan-area"></div>
+<div class="scan-line"></div>
 </div>
 
 <div id="result">Очікування сканування...</div>
 <div id="details"></div>
 
 <div class="stats">
-  <div class="stat">
-    <strong id="foundCount">0</strong>
-    Знайдено
-  </div>
-
-  <div class="stat">
-    <strong id="addedCount">0</strong>
-    Додано
-  </div>
-
-  <div class="stat">
-    <strong id="totalCount">0</strong>
-    Разом
-  </div>
+<div class="stat"><strong id="foundCount">0</strong>Знайдено</div>
+<div class="stat"><strong id="addedCount">0</strong>Додано</div>
+<div class="stat"><strong id="totalCount">0</strong>Разом</div>
 </div>
 
 <div id="confirmBox">
-  <h3>Номер не знайдено</h3>
-  <div id="confirmCode"></div>
-  <p>Додати цей номер у Google Таблицю?</p>
-
-  <button class="red" onclick="confirmAdd()">
-    Додати
-  </button>
-
-  <button class="gray" onclick="cancelAdd()">
-    Скасувати
-  </button>
+<h3>Номер не знайдено</h3>
+<div id="confirmCode"></div>
+<p>Додати цей номер у Google Таблицю?</p>
+<button class="red" onclick="confirmAdd()">Додати</button>
+<button class="gray" onclick="cancelAdd()">Скасувати</button>
 </div>
 
 <div class="manual">
-  <input id="manualCode" placeholder="Ввести номер вручну">
-
-  <button onclick="manualScan()">
-    Перевірити номер
-  </button>
+<input id="manualCode" placeholder="Ввести номер вручну">
+<button onclick="manualScan()">Перевірити номер</button>
 </div>
 
 <h3>Історія сканування</h3>
@@ -276,972 +110,571 @@ video{
 const SCRIPT_URL =
 'https://script.google.com/macros/s/AKfycbxQSpqKkPO0AinEQ-N4f7tz12K6je2aFDbyLO3MMgyjpbci8edMDq57qhos4VBJOTgE/exec';
 
-const video = document.getElementById('camera');
-const resultBox = document.getElementById('result');
-const details = document.getElementById('details');
+const $ = id => document.getElementById(id);
+const video = $('camera');
+const resultBox = $('result');
+const details = $('details');
 
-let stream = null;
-let detector = null;
-let reader = null;
+let stream=null, detector=null, reader=null;
+let scanning=false, busy=false, awaitingConfirmation=false;
+let token=0, timer=null, frameCount=0, startedAt=0;
+let candidate='', candidateCount=0, candidateTime=0;
+let lastHandled='', lastSeenAt=0, pendingBarcode='';
+let sessionLocation=null;
+let requestScript=null, requestTimer=null;
+let requestResolve=null, requestReject=null;
+let foundCount=0, addedCount=0;
+let audioContext=null;
 
-let scanning = false;
-let busy = false;
-let awaitingConfirmation = false;
+const canvas=document.createElement('canvas');
+const ctx=canvas.getContext('2d',{willReadFrequently:true});
 
-let token = 0;
-let timer = null;
-let frameCount = 0;
-let startedAt = 0;
-
-let candidate = '';
-let candidateCount = 0;
-let candidateTime = 0;
-
-let lastHandled = '';
-let lastSeenAt = 0;
-
-let pendingBarcode = '';
-
-let requestScript = null;
-let requestTimer = null;
-let requestResolve = null;
-let requestReject = null;
-
-let foundCount = 0;
-let addedCount = 0;
-
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d', {
-  willReadFrequently: true
-});
-
-// ====================================
 // ЗВУК
-// ====================================
-
-let audioContext = null;
-
-function initSound() {
-  if (!document.getElementById('soundEnabled').checked) {
-    return;
-  }
-
-  try {
-    if (!audioContext) {
-      const Audio =
-        window.AudioContext ||
-        window.webkitAudioContext;
-
-      if (!Audio) {
-        throw new Error('Web Audio API недоступний');
-      }
-
-      audioContext = new Audio();
+function initSound(){
+  if(!$('soundEnabled').checked)return;
+  try{
+    if(!audioContext){
+      const Audio=window.AudioContext||window.webkitAudioContext;
+      if(!Audio)throw Error('Web Audio API недоступний');
+      audioContext=new Audio();
     }
-
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().catch(e => {
-        console.warn('Audio resume:', e);
-      });
-    }
-
-  } catch (e) {
-    details.textContent =
-      'Звук недоступний: ' + e.message;
+    if(audioContext.state==='suspended')
+      audioContext.resume().catch(console.warn);
+  }catch(e){
+    details.textContent='Звук недоступний: '+e.message;
   }
 }
 
-function tone(hz, duration, offset = 0) {
-  if (
-    !document.getElementById('soundEnabled').checked ||
-    !audioContext ||
-    audioContext.state !== 'running'
-  ) {
-    return;
-  }
+function tone(hz,duration,offset=0){
+  if(!$('soundEnabled').checked||
+     !audioContext||audioContext.state!=='running')return;
 
-  const t = audioContext.currentTime + offset;
-
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-
-  // Гучний чіткий сигнал
-  oscillator.type = 'square';
-  oscillator.frequency.setValueAtTime(hz, t);
-
-  gain.gain.setValueAtTime(0.0001, t);
-  gain.gain.linearRampToValueAtTime(0.65, t + 0.008);
-
-  gain.gain.setValueAtTime(
-    0.65,
-    t + duration - 0.02
-  );
-
-  gain.gain.linearRampToValueAtTime(
-    0.0001,
-    t + duration
-  );
-
+  const t=audioContext.currentTime+offset;
+  const oscillator=audioContext.createOscillator();
+  const gain=audioContext.createGain();
+  oscillator.type='square';
+  oscillator.frequency.setValueAtTime(hz,t);
+  gain.gain.setValueAtTime(.0001,t);
+  gain.gain.linearRampToValueAtTime(.65,t+.008);
+  gain.gain.setValueAtTime(.65,t+duration-.02);
+  gain.gain.linearRampToValueAtTime(.0001,t+duration);
   oscillator.connect(gain);
   gain.connect(audioContext.destination);
-
   oscillator.start(t);
-  oscillator.stop(t + duration + 0.02);
+  oscillator.stop(t+duration+.02);
 }
 
-function sound(type) {
-
-  if (type === 'scanned') {
-    // ПЕРШИЙ ЗВУК:
-    // Камера успішно зчитала штрихкод
-    tone(1450, 0.09);
-
-  } else if (type === 'found') {
-    // ДРУГИЙ ЗВУК:
-    // Номер знайдено у Google Таблиці
-    tone(850, 0.17);
-
-  } else if (type === 'not_found') {
-    // Номер відсутній у таблиці
-    tone(550, 0.14);
-    tone(550, 0.14, 0.22);
-
-  } else if (type === 'error') {
-    // Помилка перевірки
-    tone(320, 0.40);
-  }
+function sound(type){
+  if(type==='scanned')tone(1450,.09);
+  else if(type==='found')tone(850,.17);
+  else if(type==='not_found'){
+    tone(550,.14);
+    tone(550,.14,.22);
+  }else if(type==='error')tone(320,.40);
 }
 
-async function testSound() {
+async function testSound(){
   initSound();
-
-  if (!document.getElementById('soundEnabled').checked) {
-    show('Увімкніть звук перемикачем', '#fff0c2');
+  if(!$('soundEnabled').checked){
+    show('Увімкніть звук перемикачем','#fff0c2');
     return;
   }
-
-  if (!audioContext) {
-    show('Звук недоступний', '#f4cccc');
+  if(!audioContext){
+    show('Звук недоступний','#f4cccc');
     return;
   }
-
-  try {
-    if (audioContext.state !== 'running') {
-      await audioContext.resume();
-    }
-
+  try{
+    await audioContext.resume();
     sound('scanned');
-
-    // Другий сигнал після паузи
-    setTimeout(() => {
-      sound('found');
-    }, 450);
-
-  } catch (e) {
-    show('Браузер не дозволив звук', '#f4cccc');
+    setTimeout(()=>sound('found'),450);
+  }catch(e){
+    show('Браузер не дозволив звук','#f4cccc');
   }
 }
 
-document.getElementById('soundEnabled')
-  .addEventListener('change', e => {
-    if (e.target.checked) {
-      initSound();
-    }
-  });
+$('soundEnabled').addEventListener('change',e=>{
+  if(e.target.checked)initSound();
+});
 
-// ====================================
 // ІНТЕРФЕЙС
-// ====================================
-
-function show(text, color = '#e5e7eb') {
-  resultBox.textContent = text;
-  resultBox.style.background = color;
+function show(text,color='#e5e7eb'){
+  resultBox.textContent=text;
+  resultBox.style.background=color;
 }
 
-function validCode(code) {
-  return typeof code === 'string' &&
-    code.trim().length > 0 &&
-    code.trim().length <= 150;
+function validCode(code){
+  return typeof code==='string'&&
+    code.trim().length>0&&code.trim().length<=150;
 }
 
-function updateStats() {
-  document.getElementById('foundCount').textContent =
-    foundCount;
-
-  document.getElementById('addedCount').textContent =
-    addedCount;
-
-  document.getElementById('totalCount').textContent =
-    foundCount + addedCount;
+function updateStats(){
+  $('foundCount').textContent=foundCount;
+  $('addedCount').textContent=addedCount;
+  $('totalCount').textContent=foundCount+addedCount;
 }
 
-function addHistory(code, status, message) {
-  const item = document.createElement('div');
-
-  item.className = 'history-item ' + status;
-
-  item.textContent =
-    new Date().toLocaleTimeString('uk-UA') +
-    ' | ' + code + ' | ' + message;
-
-  const list = document.getElementById('history');
-
-  list.prepend(item);
-
-  while (list.children.length > 20) {
-    list.lastElementChild.remove();
-  }
+function addHistory(code,status,message){
+  const item=document.createElement('div');
+  item.className='history-item '+status;
+  item.textContent=new Date().toLocaleTimeString('uk-UA')+
+    ' | '+code+' | '+message;
+  $('history').prepend(item);
+  while($('history').children.length>20)
+    $('history').lastElementChild.remove();
 }
 
-// ====================================
-// GOOGLE APPS SCRIPT
-// ====================================
-
-function apiRequest(action, barcode) {
-  return new Promise((resolve, reject) => {
-
-    if (requestScript) {
-      reject(
-        new Error('Попередній запит ще триває')
-      );
+// ЗВ'ЯЗОК ІЗ GOOGLE APPS SCRIPT
+function apiRequest(action,barcode,location=sessionLocation){
+  return new Promise((resolve,reject)=>{
+    if(requestScript){
+      reject(Error('Попередній запит ще триває'));
       return;
     }
+    if(!location?.building||!location?.room){
+      reject(Error('Не вказано корпус або кабінет'));
+      return;
+    }
+    const script=document.createElement('script');
+    const url=new URL(SCRIPT_URL);
+    url.searchParams.set('action',action);
+    url.searchParams.set('barcode',barcode);
+    url.searchParams.set('building',location.building);
+    url.searchParams.set('room',location.room);
+    url.searchParams.set('callback','inventoryCallback');
+    url.searchParams.set('_',Date.now().toString());
 
-    const script = document.createElement('script');
-    const url = new URL(SCRIPT_URL);
-
-    url.searchParams.set('action', action);
-    url.searchParams.set('barcode', barcode);
-    url.searchParams.set('callback', 'inventoryCallback');
-    url.searchParams.set('_', Date.now().toString());
-
-    requestScript = script;
-    requestResolve = resolve;
-    requestReject = reject;
-
-    script.src = url.toString();
-    script.async = true;
-
-    script.onerror = () => {
-      finishRequest(
-        new Error('Помилка зв’язку з Google Apps Script')
-      );
-    };
-
-    requestTimer = setTimeout(() => {
-      finishRequest(
-        new Error('Час очікування відповіді минув')
-      );
-    }, 15000);
-
+    requestScript=script;
+    requestResolve=resolve;
+    requestReject=reject;
+    script.src=url.toString();
+    script.async=true;
+    script.onerror=()=>finishRequest(
+      Error('Помилка зв’язку з Google Apps Script'));
+    requestTimer=setTimeout(()=>finishRequest(
+      Error('Час очікування відповіді минув')),15000);
     document.head.appendChild(script);
   });
 }
 
-function finishRequest(error, data) {
-  const resolve = requestResolve;
-  const reject = requestReject;
-
-  requestResolve = null;
-  requestReject = null;
-
-  if (requestTimer) {
+function finishRequest(error,data){
+  const resolve=requestResolve;
+  const reject=requestReject;
+  requestResolve=null;
+  requestReject=null;
+  if(requestTimer){
     clearTimeout(requestTimer);
-    requestTimer = null;
+    requestTimer=null;
   }
-
-  if (requestScript) {
+  if(requestScript){
     requestScript.remove();
-    requestScript = null;
+    requestScript=null;
   }
-
-  if (error) {
-    if (reject) {
-      reject(error);
-    }
-  } else if (resolve) {
-    resolve(data);
-  }
+  if(error){
+    if(reject)reject(error);
+  }else if(resolve)resolve(data);
 }
 
-window.inventoryCallback = function(data) {
-  finishRequest(null, data);
-};
+window.inventoryCallback=data=>finishRequest(null,data);
 
-// ====================================
-// КАМЕРА ТА РОЗПІЗНАВАННЯ
-// ====================================
-
-async function setupDecoders() {
-  detector = null;
-  reader = null;
-
-  if ('BarcodeDetector' in window) {
-    try {
-      const formats =
-        await BarcodeDetector.getSupportedFormats();
-
-      if (formats.includes('code_128')) {
-        detector = new BarcodeDetector({
-          formats: ['code_128']
-        });
-      }
-    } catch (e) {}
+// КАМЕРА
+async function setupDecoders(){
+  detector=null;
+  reader=null;
+  if('BarcodeDetector' in window){
+    try{
+      const formats=await BarcodeDetector.getSupportedFormats();
+      if(formats.includes('code_128'))
+        detector=new BarcodeDetector({formats:['code_128']});
+    }catch(e){}
   }
-
-  if (window.ZXing) {
-    const hints = new Map();
-
-    hints.set(
-      ZXing.DecodeHintType.POSSIBLE_FORMATS,
-      [ZXing.BarcodeFormat.CODE_128]
-    );
-
-    hints.set(
-      ZXing.DecodeHintType.TRY_HARDER,
-      false
-    );
-
-    reader = new ZXing.MultiFormatReader();
+  if(window.ZXing){
+    const hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,
+      [ZXing.BarcodeFormat.CODE_128]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER,false);
+    reader=new ZXing.MultiFormatReader();
     reader.setHints(hints);
   }
-
-  if (!detector && !reader) {
-    throw new Error('Розпізнавач недоступний');
-  }
+  if(!detector&&!reader)
+    throw Error('Розпізнавач недоступний');
 }
 
-async function openCamera() {
-  const modes = [
-    {
-      facingMode: {ideal:'environment'},
-      width: {ideal:1920},
-      height: {ideal:1080}
-    },
-    {
-      facingMode: {ideal:'environment'},
-      width: {ideal:1280},
-      height: {ideal:720}
-    },
-    {
-      facingMode: {ideal:'environment'}
-    },
+async function openCamera(){
+  const modes=[
+    {facingMode:{ideal:'environment'},
+     width:{ideal:1920},height:{ideal:1080}},
+    {facingMode:{ideal:'environment'},
+     width:{ideal:1280},height:{ideal:720}},
+    {facingMode:{ideal:'environment'}},
     true
   ];
-
   let error;
-
-  for (const mode of modes) {
-    try {
+  for(const mode of modes){
+    try{
       return await navigator.mediaDevices.getUserMedia({
-        video: mode,
-        audio: false
+        video:mode,audio:false
       });
-
-    } catch (e) {
-      error = e;
-
-      if (
-        e.name === 'NotAllowedError' ||
-        e.name === 'SecurityError'
-      ) {
+    }catch(e){
+      error=e;
+      if(e.name==='NotAllowedError'||e.name==='SecurityError')
         throw e;
-      }
     }
   }
-
-  throw error || new Error('Камера недоступна');
+  throw error||Error('Камера недоступна');
 }
 
-async function configureCamera(track) {
-  try {
-    const caps = track.getCapabilities
-      ? track.getCapabilities()
-      : {};
-
-    if (caps.focusMode?.includes('continuous')) {
-      try {
+async function configureCamera(track){
+  try{
+    const caps=track.getCapabilities?.()||{};
+    if(caps.focusMode?.includes('continuous')){
+      try{
         await track.applyConstraints({
-          advanced: [{
-            focusMode: 'continuous'
-          }]
+          advanced:[{focusMode:'continuous'}]
         });
-      } catch (e) {}
+      }catch(e){}
     }
-
-    if (
-      caps.zoom &&
-      Number.isFinite(caps.zoom.min) &&
-      Number.isFinite(caps.zoom.max)
-    ) {
-      const zoom = Math.max(
-        caps.zoom.min,
-        Math.min(1, caps.zoom.max)
-      );
-
-      try {
-        await track.applyConstraints({
-          advanced: [{zoom}]
-        });
-      } catch (e) {}
+    if(caps.zoom&&Number.isFinite(caps.zoom.min)&&
+       Number.isFinite(caps.zoom.max)){
+      const zoom=Math.max(caps.zoom.min,
+        Math.min(1,caps.zoom.max));
+      try{
+        await track.applyConstraints({advanced:[{zoom}]});
+      }catch(e){}
     }
-
-  } catch (e) {}
+  }catch(e){}
 }
 
-async function startScanner() {
-  // Активація звуку натисканням кнопки
-  initSound();
+// ВВЕДЕННЯ КОРПУСУ ТА КАБІНЕТУ
+function requestLocation(){
+  if(scanning||busy||awaitingConfirmation)return;
+  $('locationForm').style.display='block';
+  $('startBtn').disabled=true;
+  show('Введіть корпус і кабінет');
+  $('buildingInput').focus();
+}
 
-  if (scanning) {
+function cancelLocation(){
+  $('locationForm').style.display='none';
+  $('startBtn').disabled=false;
+  show('Введення місця скасовано');
+}
+
+function confirmLocation(){
+  const building=$('buildingInput').value.trim();
+  const room=$('roomInput').value.trim();
+  if(!building||!room){
+    show('Заповніть корпус і кабінет','#f4cccc');
     return;
   }
+  if(building.length>100||room.length>100){
+    show('Занадто довге значення','#f4cccc');
+    return;
+  }
+  sessionLocation=Object.freeze({building,room});
+  $('locationForm').style.display='none';
+  $('activeLocation').textContent=
+    'Корпус: '+building+' | Кабінет: '+room;
+  $('activeLocation').style.display='block';
+  startScanner();
+}
 
-  const current = ++token;
+async function startScanner(){
+  initSound();
+  if(!sessionLocation){
+    requestLocation();
+    return;
+  }
+  if(scanning)return;
 
-  scanning = true;
-  busy = false;
-  awaitingConfirmation = false;
+  const current=++token;
+  scanning=true;
+  busy=false;
+  awaitingConfirmation=false;
+  $('startBtn').disabled=true;
 
-  document.getElementById('startBtn').disabled = true;
-
-  try {
+  try{
     show('Запуск камери...');
-
-    const opened = await openCamera();
-
-    if (!scanning || current !== token) {
-      opened.getTracks().forEach(t => t.stop());
+    const opened=await openCamera();
+    if(!scanning||current!==token){
+      opened.getTracks().forEach(t=>t.stop());
       return;
     }
-
-    stream = opened;
-    video.srcObject = stream;
-
+    stream=opened;
+    video.srcObject=stream;
     await video.play();
-
-    if (!scanning || current !== token) {
-      return;
-    }
-
+    if(!scanning||current!==token)return;
     await configureCamera(stream.getVideoTracks()[0]);
     await setupDecoders();
+    if(!scanning||current!==token)return;
 
-    if (!scanning || current !== token) {
-      return;
-    }
-
-    frameCount = 0;
-    startedAt = performance.now();
-
-    candidate = '';
-    candidateCount = 0;
-
-    lastHandled = '';
-    lastSeenAt = 0;
-
+    frameCount=0;
+    startedAt=performance.now();
+    candidate='';
+    candidateCount=0;
+    lastHandled='';
+    lastSeenAt=0;
     show('Наведіть штрихкод у рамку');
-    details.textContent =
-      'Камера працює безперервно';
-
-    schedule(current, 0);
-
-  } catch (e) {
+    details.textContent='Камера працює безперервно';
+    schedule(current,0);
+  }catch(e){
     stopScanner();
-
-    show(
-      'Помилка: ' + e.message,
-      '#f4cccc'
-    );
-
+    show('Помилка: '+e.message,'#f4cccc');
     sound('error');
   }
 }
 
-function schedule(current, delay = 40) {
-  if (!scanning || current !== token) {
-    return;
-  }
-
-  timer = setTimeout(() => {
-    scanFrame(current);
-  }, delay);
+function schedule(current,delay=40){
+  if(!scanning||current!==token)return;
+  timer=setTimeout(()=>scanFrame(current),delay);
 }
 
-function drawRegion(mode) {
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-
-  if (!w || !h) {
-    return false;
-  }
-
-  const wide = mode === 'wide';
-
-  const sx = Math.floor(
-    w * (wide ? .02 : .05)
-  );
-
-  const sy = Math.floor(
-    h * (wide ? .25 : .38)
-  );
-
-  const sw = Math.floor(
-    w * (wide ? .96 : .90)
-  );
-
-  const sh = Math.floor(
-    h * (wide ? .50 : .24)
-  );
-
-  const maxWidth = wide ? 1600 : 1280;
-  const scale = Math.min(1, maxWidth / sw);
-
-  canvas.width = Math.max(
-    1,
-    Math.round(sw * scale)
-  );
-
-  canvas.height = Math.max(
-    1,
-    Math.round(sh * scale)
-  );
-
-  ctx.drawImage(
-    video,
-    sx, sy, sw, sh,
-    0, 0, canvas.width, canvas.height
-  );
-
+function drawRegion(mode){
+  const w=video.videoWidth,h=video.videoHeight;
+  if(!w||!h)return false;
+  const wide=mode==='wide';
+  const sx=Math.floor(w*(wide?.02:.05));
+  const sy=Math.floor(h*(wide?.25:.38));
+  const sw=Math.floor(w*(wide?.96:.90));
+  const sh=Math.floor(h*(wide?.50:.24));
+  const maxWidth=wide?1600:1280;
+  const scale=Math.min(1,maxWidth/sw);
+  canvas.width=Math.max(1,Math.round(sw*scale));
+  canvas.height=Math.max(1,Math.round(sh*scale));
+  ctx.drawImage(video,sx,sy,sw,sh,
+    0,0,canvas.width,canvas.height);
   return true;
 }
 
-function decodeZXing() {
-  if (!reader) {
-    return '';
-  }
-
-  try {
-    const source =
+function decodeZXing(){
+  if(!reader)return '';
+  try{
+    const source=
       new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-
-    const bitmap = new ZXing.BinaryBitmap(
-      new ZXing.HybridBinarizer(source)
-    );
-
-    const result = reader.decode(bitmap);
-
-    return result
-      ? String(result.getText()).trim()
-      : '';
-
-  } catch (e) {
+    const bitmap=new ZXing.BinaryBitmap(
+      new ZXing.HybridBinarizer(source));
+    const result=reader.decode(bitmap);
+    return result?String(result.getText()).trim():'';
+  }catch(e){
     return '';
-
-  } finally {
+  }finally{
     reader.reset();
   }
 }
 
-async function scanFrame(current) {
-  if (!scanning || current !== token) {
+async function scanFrame(current){
+  if(!scanning||current!==token)return;
+  if(busy||awaitingConfirmation){
+    schedule(current,100);
+    return;
+  }
+  if(video.readyState<2){
+    schedule(current,100);
     return;
   }
 
-  if (busy || awaitingConfirmation) {
-    schedule(current, 100);
-    return;
-  }
-
-  if (video.readyState < 2) {
-    schedule(current, 100);
-    return;
-  }
-
-  try {
+  try{
     frameCount++;
+    const elapsed=performance.now()-startedAt;
+    const mode=elapsed>2500&&frameCount%3===0
+      ?'wide':'fast';
+    if(!drawRegion(mode))return;
 
-    const elapsed =
-      performance.now() - startedAt;
-
-    const mode =
-      elapsed > 2500 && frameCount % 3 === 0
-        ? 'wide'
-        : 'fast';
-
-    if (!drawRegion(mode)) {
-      return;
+    let code='';
+    if(detector){
+      try{
+        const found=await detector.detect(canvas);
+        if(current!==token||!scanning)return;
+        const item=found.find(x=>x.format==='code_128');
+        if(item)code=String(item.rawValue||'').trim();
+      }catch(e){}
+    }
+    if(!code&&reader&&
+       (!detector||(elapsed>1200&&frameCount%3===0))){
+      code=decodeZXing();
     }
 
-    let code = '';
-
-    if (detector) {
-      try {
-        const found =
-          await detector.detect(canvas);
-
-        if (current !== token || !scanning) {
-          return;
-        }
-
-        const item = found.find(
-          x => x.format === 'code_128'
-        );
-
-        if (item) {
-          code = String(
-            item.rawValue || ''
-          ).trim();
-        }
-
-      } catch (e) {}
-    }
-
-    if (
-      !code &&
-      reader &&
-      (
-        !detector ||
-        (
-          elapsed > 1200 &&
-          frameCount % 3 === 0
-        )
-      )
-    ) {
-      code = decodeZXing();
-    }
-
-    const now = performance.now();
-
-    if (validCode(code)) {
-      lastSeenAt = now;
-
-      if (code === lastHandled) {
-        candidate = '';
-        candidateCount = 0;
+    const now=performance.now();
+    if(validCode(code)){
+      lastSeenAt=now;
+      if(code===lastHandled){
+        candidate='';
+        candidateCount=0;
         return;
       }
-
-      if (
-        code === candidate &&
-        now - candidateTime < 2000
-      ) {
+      if(code===candidate&&now-candidateTime<2000)
         candidateCount++;
-      } else {
-        candidate = code;
-        candidateCount = 1;
+      else{
+        candidate=code;
+        candidateCount=1;
       }
+      candidateTime=now;
 
-      candidateTime = now;
-
-      if (candidateCount >= 2) {
-        candidate = '';
-        candidateCount = 0;
-
-        lastHandled = code;
-        busy = true;
-
-        // ПЕРШИЙ ЗВУК:
-        // Штрихкод розпізнано камерою.
-        // Google Таблицю ще не перевірено.
+      if(candidateCount>=2){
+        candidate='';
+        candidateCount=0;
+        lastHandled=code;
+        busy=true;
         sound('scanned');
-
-        // Перевірка номера у Google Таблиці.
-        // Другий звук буде після відповіді.
         processBarcode(code);
       }
-
-    } else {
-      candidate = '';
-      candidateCount = 0;
-
-      if (now - lastSeenAt > 1500) {
-        lastHandled = '';
-      }
+    }else{
+      candidate='';
+      candidateCount=0;
+      if(now-lastSeenAt>1500)lastHandled='';
     }
-
-  } catch (e) {
+  }catch(e){
     console.warn(e);
-
-  } finally {
-    if (scanning && current === token) {
-      schedule(current, 40);
-    }
+  }finally{
+    if(scanning&&current===token)schedule(current,40);
   }
 }
 
-// ====================================
-// ОБРОБКА РЕЗУЛЬТАТІВ
-// ====================================
+// РЕЗУЛЬТАТИ
+async function processBarcode(code){
+  const started=performance.now();
+  const location=sessionLocation;
+  show('Перевіряємо: '+code,'#fff3cd');
 
-async function processBarcode(code) {
-  const started = performance.now();
+  try{
+    const data=await apiRequest('scan',code,location);
+    if(!scanning)return;
 
-  show(
-    'Перевіряємо: ' + code,
-    '#fff3cd'
-  );
+    const seconds=((performance.now()-started)/1000).toFixed(1);
 
-  try {
-    const data =
-      await apiRequest('scan', code);
-
-    if (!scanning) {
-      return;
-    }
-
-    const seconds = (
-      (performance.now() - started) / 1000
-    ).toFixed(1);
-
-    if (data.status === 'found') {
+    if(data.status==='found'){
       foundCount++;
       updateStats();
-
-      show(
-        'ЗНАЙДЕНО: ' + code,
-        '#b7e1cd'
-      );
-
-      details.textContent =
-        'Рядок ' + data.row +
-        ' | Запит: ' + seconds + ' с';
-
-      addHistory(
-        code,
-        'found',
-        'Знайдено'
-      );
-
-      // ДРУГИЙ ЗВУК:
-      // Перевірка завершена, номер знайдено.
+      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
+      details.textContent='Рядок '+data.row+
+        ' | Запит: '+seconds+' с';
+      addHistory(code,'found','Знайдено | Корпус '+
+        location.building+', каб. '+location.room);
       sound('found');
-
-      if (navigator.vibrate) {
-        navigator.vibrate(80);
-      }
-
-    } else if (data.status === 'not_found') {
-      awaitingConfirmation = true;
-      pendingBarcode = code;
-
-      document.getElementById('confirmCode')
-        .textContent = code;
-
-      document.getElementById('confirmBox')
-        .style.display = 'block';
-
-      show(
-        'НЕ ЗНАЙДЕНО: ' + code,
-        '#fff0c2'
-      );
-
-      details.textContent =
-        'Потрібне підтвердження додавання';
-
-      // ДРУГИЙ ЗВУК:
-      // Номер не знайдено — два писки.
+      navigator.vibrate?.(80);
+    }else if(data.status==='not_found'){
+      awaitingConfirmation=true;
+      pendingBarcode=code;
+      $('confirmCode').textContent=code;
+      $('confirmBox').style.display='block';
+      show('НЕ ЗНАЙДЕНО: '+code,'#fff0c2');
+      details.textContent='Потрібне підтвердження додавання';
       sound('not_found');
-
-    } else {
-      throw new Error(
-        data.message ||
-        'Невідома відповідь сервера'
-      );
+    }else{
+      throw Error(data.message||'Невідома відповідь сервера');
     }
-
-  } catch (e) {
-    show(
-      'Помилка: ' + e.message,
-      '#f4cccc'
-    );
-
-    addHistory(
-      code,
-      'error',
-      e.message
-    );
-
+  }catch(e){
+    show('Помилка: '+e.message,'#f4cccc');
+    addHistory(code,'error',e.message);
     sound('error');
-
-  } finally {
-    busy = false;
+  }finally{
+    busy=false;
   }
 }
 
-async function confirmAdd() {
+async function confirmAdd(){
   initSound();
+  if(!awaitingConfirmation||busy)return;
+  const code=pendingBarcode;
+  const location=sessionLocation;
+  busy=true;
+  show('Додаємо номер: '+code,'#fff3cd');
 
-  if (!awaitingConfirmation || busy) {
-    return;
-  }
-
-  const code = pendingBarcode;
-  busy = true;
-
-  show(
-    'Додаємо номер: ' + code,
-    '#fff3cd'
-  );
-
-  try {
-    const data =
-      await apiRequest('add', code);
-
-    if (data.status === 'added') {
+  try{
+    const data=await apiRequest('add',code,location);
+    if(data.status==='added'){
       addedCount++;
       updateStats();
-
-      show(
-        'ДОДАНО: ' + code,
-        '#fff0c2'
-      );
-
-      details.textContent =
-        'Новий номер у рядку ' + data.row;
-
-      addHistory(
-        code,
-        'added',
-        'Додано'
-      );
-
+      show('ДОДАНО: '+code,'#fff0c2');
+      details.textContent='Новий номер у рядку '+data.row;
+      addHistory(code,'added','Додано | Корпус '+
+        location.building+', каб. '+location.room);
       sound('found');
-
-    } else if (data.status === 'found') {
+    }else if(data.status==='found'){
       foundCount++;
       updateStats();
-
-      show(
-        'ЗНАЙДЕНО: ' + code,
-        '#b7e1cd'
-      );
-
-      addHistory(
-        code,
-        'found',
-        'Знайдено'
-      );
-
+      show('ЗНАЙДЕНО: '+code,'#b7e1cd');
+      addHistory(code,'found','Знайдено');
       sound('found');
-
-    } else {
-      throw new Error(
-        data.message ||
-        'Не вдалося додати номер'
-      );
+    }else{
+      throw Error(data.message||'Не вдалося додати номер');
     }
-
     closeConfirmation();
-
-  } catch (e) {
-    show(
-      'Помилка додавання: ' + e.message,
-      '#f4cccc'
-    );
-
+  }catch(e){
+    show('Помилка додавання: '+e.message,'#f4cccc');
     sound('error');
-
-  } finally {
-    busy = false;
+  }finally{
+    busy=false;
   }
 }
 
-function closeConfirmation() {
-  awaitingConfirmation = false;
-  pendingBarcode = '';
-
-  document.getElementById('confirmBox')
-    .style.display = 'none';
+function closeConfirmation(){
+  awaitingConfirmation=false;
+  pendingBarcode='';
+  $('confirmBox').style.display='none';
 }
 
-function cancelAdd() {
-  if (busy) {
-    return;
-  }
-
-  const code = pendingBarcode;
-
+function cancelAdd(){
+  if(busy)return;
+  const code=pendingBarcode;
   closeConfirmation();
-
-  show(
-    'Додавання скасовано: ' + code
-  );
-
-  addHistory(
-    code,
-    'error',
-    'Скасовано'
-  );
+  show('Додавання скасовано: '+code);
+  addHistory(code,'error','Скасовано');
 }
 
-function manualScan() {
+function manualScan(){
   initSound();
-
-  if (busy || awaitingConfirmation) {
+  if(busy||awaitingConfirmation)return;
+  if(!scanning||!sessionLocation){
+    show('Спочатку натисніть «Почати сканування» та вкажіть місце',
+      '#fff0c2');
     return;
   }
-
-  const input =
-    document.getElementById('manualCode');
-
-  const code = input.value.trim();
-
-  if (!validCode(code)) {
-    show(
-      'Введіть інвентарний номер',
-      '#f4cccc'
-    );
+  const input=$('manualCode');
+  const code=input.value.trim();
+  if(!validCode(code)){
+    show('Введіть інвентарний номер','#f4cccc');
     return;
   }
-
-  lastHandled = code;
-  busy = true;
-  input.value = '';
-
-  // Для ручного введення також подаємо
-  // сигнал прийняття номера.
+  lastHandled=code;
+  busy=true;
+  input.value='';
   sound('scanned');
-
   processBarcode(code);
 }
 
-function stopScanner() {
-  scanning = false;
+// ЗУПИНКА ТА ПЕРЕХІД ДО НАСТУПНОГО КАБІНЕТУ
+function stopScanner(){
+  if(busy||awaitingConfirmation||requestScript){
+    show('Дочекайтеся завершення перевірки або скасуйте додавання',
+      '#fff0c2');
+    return;
+  }
+  sessionLocation=null;
+  $('activeLocation').style.display='none';
+  $('locationForm').style.display='none';
+  scanning=false;
   token++;
 
-  if (timer) {
+  if(timer){
     clearTimeout(timer);
-    timer = null;
+    timer=null;
   }
-
-  if (stream) {
-    stream.getTracks().forEach(
-      track => track.stop()
-    );
-    stream = null;
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+    stream=null;
   }
-
-  video.srcObject = null;
-
-  detector = null;
-  reader = null;
-
-  document.getElementById('startBtn')
-    .disabled = false;
-
-  if (!busy && !awaitingConfirmation) {
-    show('Сканування зупинено');
-  }
+  video.srcObject=null;
+  detector=null;
+  reader=null;
+  $('startBtn').disabled=false;
+  show('Сканування зупинено');
 }
 
-window.addEventListener(
-  'pagehide',
-  stopScanner
-);
+window.addEventListener('pagehide',()=>{
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+});
 
 updateStats();
 </script>
-
 </body>
 </html>
