@@ -55,7 +55,34 @@ video{width:100%;display:block}
 .location-box label{display:block;font-weight:bold;margin:10px 0 5px}
 .location-box button{width:100%;margin:10px 0 0}
 #activeLocation{display:none;background:#dff2e4;font-weight:bold}
-#confirmBox,#labelBox{display:none}
+#confirmBox,#deviceTypeBox,#labelBox{display:none}
+
+.device-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:12px 0;
+}
+
+.device-options button{
+  margin:0;
+  background:#eef3f8;
+  color:#222;
+  border:2px solid #b7c4d3;
+  padding:13px 6px;
+}
+
+.device-options button.selected{
+  background:#dff2e4;
+  border-color:#188038;
+  color:#145b2b;
+  font-weight:bold;
+}
+
+#deviceTypeBox .save-device{
+  width:95%;
+  max-width:350px;
+}
 #confirmCode,#labelCode{font-size:21px;font-weight:bold;overflow-wrap:anywhere;margin:8px 0}
 #labelState{font-weight:bold;margin:10px}
 #labelAction{width:95%;max-width:350px}
@@ -160,6 +187,42 @@ button{font-size:15px}
   <button class="gray" onclick="cancelAdd()">Скасувати</button>
 </div>
 
+  
+<div id="deviceTypeBox" class="panel">
+  <h3>Тип пристрою</h3>
+
+  <div
+    id="deviceTypeCode"
+    style="font-size:20px;font-weight:bold"
+  ></div>
+
+  <p>
+    Оберіть тип обладнання для нового
+    інвентарного номера:
+  </p>
+
+  <div
+    id="deviceOptions"
+    class="device-options"
+  ></div>
+
+  <button
+    id="saveDeviceBtn"
+    class="green save-device"
+    onclick="saveNewDevice()"
+    disabled
+  >
+    Підтвердити та зберегти
+  </button>
+
+  <button
+    class="gray"
+    onclick="backToConfirmation()"
+  >
+    Назад
+  </button>
+</div>
+
 <h3>Історія сканування</h3>
 <div id="history"></div>
 
@@ -212,6 +275,17 @@ let candidateTime = 0;
 let lastHandled = '';
 let lastSeenAt = 0;
 let pendingBarcode = '';
+  let selectedDeviceType = '';
+
+const DEVICE_TYPES = [
+  'Монітор',
+  'Системний блок',
+  'Моноблок',
+  'Ноутбук',
+  'Принтер',
+  'ДБЖ',
+  'БФП'
+];
 
 let sessionLocation = null;
 let audioContext = null;
@@ -451,7 +525,12 @@ function processQueue() {
       job.extra.replace ? '1' : '0'
     );
   }
-
+if (job.action === 'add') {
+  url.searchParams.set(
+    'deviceType',
+    job.extra.deviceType || ''
+  );
+}
   url.searchParams.set('callback', 'inventoryCallback');
   url.searchParams.set('_', Date.now() + '-' + job.id);
 
@@ -1458,40 +1537,121 @@ async function processBarcode(code) {
   }
 }
 
-/* ДОДАВАННЯ НОВОГО НОМЕРА */
 
-async function confirmAdd() {
+/* ДОДАВАННЯ НОВОГО НОМЕРА З ТИПОМ ПРИСТРОЮ */
+
+function confirmAdd() {
+  if (!awaitingConfirmation || busy) return;
+
+  selectedDeviceType = '';
+
+  $('confirmBox').style.display = 'none';
+  $('deviceTypeBox').style.display = 'block';
+
+  $('deviceTypeCode').textContent = pendingBarcode;
+  $('saveDeviceBtn').disabled = true;
+
+  const options = $('deviceOptions');
+  options.replaceChildren();
+
+  for (const type of DEVICE_TYPES) {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = type;
+
+    button.addEventListener('click', () => {
+      selectDeviceType(type);
+    });
+
+    options.appendChild(button);
+  }
+
+  $('deviceTypeBox').scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  });
+
+  show(
+    'Виберіть тип пристрою: ' + pendingBarcode,
+    '#fff3cd'
+  );
+}
+
+function selectDeviceType(type) {
+  if (!DEVICE_TYPES.includes(type) || busy) return;
+
+  selectedDeviceType = type;
+
+  for (const button of $('deviceOptions').children) {
+    button.classList.toggle(
+      'selected',
+      button.textContent === type
+    );
+  }
+
+  $('saveDeviceBtn').disabled = false;
+}
+
+function backToConfirmation() {
+  if (busy) return;
+
+  selectedDeviceType = '';
+
+  $('deviceTypeBox').style.display = 'none';
+  $('confirmBox').style.display = 'block';
+
+  show(
+    'НЕ ЗНАЙДЕНО: ' + pendingBarcode,
+    '#fff0c2'
+  );
+}
+
+async function saveNewDevice() {
   initSound();
 
-  if (!awaitingConfirmation || busy) return;
+  if (
+    !awaitingConfirmation ||
+    busy ||
+    !DEVICE_TYPES.includes(selectedDeviceType)
+  ) {
+    return;
+  }
 
   const code = pendingBarcode;
   const location = sessionLocation;
+  const deviceType = selectedDeviceType;
 
   busy = true;
+  $('saveDeviceBtn').disabled = true;
 
-  show('Додаємо номер: ' + code, '#fff3cd');
+  show(
+    'Додаємо: ' + code + ' | ' + deviceType,
+    '#fff3cd'
+  );
 
   try {
     const data = await apiRequest(
       'add',
       code,
-      location
+      location,
+      { deviceType }
     );
 
     if (data.status === 'added') {
       show('ДОДАНО: ' + code, '#fff0c2');
 
       $('details').textContent =
-        'Новий номер у рядку ' + data.row;
+        'Рядок ' + data.row +
+        ' | Тип пристрою: ' + deviceType;
 
       showLabel(code, data.labelReplace);
 
       addHistory(
         code,
         'added',
-        'Додано | Корпус ' +
-        location.building +
+        'Додано | ' + deviceType +
+        ' | Корпус ' + location.building +
         ', каб. ' + location.room
       );
 
@@ -1501,14 +1661,13 @@ async function confirmAdd() {
       show('ЗНАЙДЕНО: ' + code, '#b7e1cd');
 
       showLabel(code, data.labelReplace);
-      addHistory(code, 'found', 'Знайдено');
+      addHistory(code, 'found', 'Номер уже існує');
 
       sound('found');
 
     } else {
       throw Error(
-        data.message ||
-        'Не вдалося додати номер'
+        data.message || 'Не вдалося додати номер'
       );
     }
 
@@ -1525,6 +1684,10 @@ async function confirmAdd() {
 
   } finally {
     busy = false;
+
+    $('saveDeviceBtn').disabled =
+      !selectedDeviceType;
+
     runPendingStats();
   }
 }
@@ -1532,7 +1695,10 @@ async function confirmAdd() {
 function closeConfirmation() {
   awaitingConfirmation = false;
   pendingBarcode = '';
+  selectedDeviceType = '';
+
   $('confirmBox').style.display = 'none';
+  $('deviceTypeBox').style.display = 'none';
 }
 
 function cancelAdd() {
@@ -1547,6 +1713,7 @@ function cancelAdd() {
 
   runPendingStats();
 }
+
 
 /* РУЧНЕ ВВЕДЕННЯ */
 
